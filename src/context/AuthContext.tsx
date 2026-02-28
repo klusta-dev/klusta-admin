@@ -1,8 +1,8 @@
 "use client";
 
 import React, { createContext, useCallback, useContext, useEffect, useState } from "react";
-
-const STORAGE_KEY = "klusta_admin_token";
+import { authApi } from "@/lib/api";
+import { setAuthTokens, clearAuthTokens, AUTH_ACCESS_KEY } from "@/lib/api/client";
 
 type AuthContextValue = {
   isAuthenticated: boolean;
@@ -19,22 +19,29 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     if (typeof window === "undefined") return;
-    const token = localStorage.getItem(STORAGE_KEY);
+    const token = localStorage.getItem(AUTH_ACCESS_KEY);
     setIsAuthenticated(!!token);
     setIsLoading(false);
   }, []);
 
   const login = useCallback(async (email: string, password: string) => {
-    // Demo: accept any non-empty email/password. Replace with real API.
     if (!email.trim() || !password.trim()) return false;
-    const token = "demo_" + Date.now();
-    localStorage.setItem(STORAGE_KEY, token);
-    setIsAuthenticated(true);
-    return true;
+    try {
+      const res = await authApi.login({ email: email.trim(), password });
+      const d = res?.data as { access_token?: string; refresh_token?: string };
+      if (d?.access_token && d?.refresh_token) {
+        setAuthTokens(d.access_token, d.refresh_token);
+        setIsAuthenticated(true);
+        return true;
+      }
+      return false;
+    } catch {
+      return false;
+    }
   }, []);
 
   const logout = useCallback(() => {
-    localStorage.removeItem(STORAGE_KEY);
+    clearAuthTokens();
     setIsAuthenticated(false);
   }, []);
 

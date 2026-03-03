@@ -3,7 +3,12 @@
 import axios, { AxiosError } from "axios";
 import type { ErrorResponse } from "./types";
 
-const BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "";
+const RAW_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "";
+const isAbsoluteBaseUrl = /^https?:\/\//i.test(RAW_BASE_URL);
+const BASE_URL =
+  typeof window !== "undefined" && isAbsoluteBaseUrl
+    ? "/api/proxy"
+    : RAW_BASE_URL || "/api/proxy";
 const API_ACCESS_KEY = process.env.NEXT_PUBLIC_API_ACCESS_KEY || "";
 
 export const AUTH_ACCESS_KEY = "klusta_access_token";
@@ -16,6 +21,11 @@ export const api = axios.create({
     ...(API_ACCESS_KEY ? { "api-access-key": API_ACCESS_KEY } : {}),
   },
 });
+
+type TokenPair = {
+  access: string;
+  refresh?: string;
+};
 
 function getAccessToken(): string | null {
   if (typeof window === "undefined") return null;
@@ -41,14 +51,24 @@ async function refreshAccessToken(): Promise<string | null> {
   if (refreshPromise) return refreshPromise;
   refreshPromise = (async () => {
     try {
+      const refreshBaseUrl =
+        typeof window !== "undefined" && isAbsoluteBaseUrl ? "/api/proxy" : BASE_URL;
+      const accessToken = getAccessToken();
       const { data } = await axios.post<{ data?: { access_token?: string }; status?: boolean }>(
-        `${BASE_URL}/auth/refresh-token`,
+        `${refreshBaseUrl}/auth/refresh-token`,
         { refresh_token: refresh },
-        { headers: { "Content-Type": "application/json", "api-access-key": API_ACCESS_KEY } }
+        {
+          headers: {
+            "Content-Type": "application/json",
+            "api-access-key": API_ACCESS_KEY,
+            ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
+          },
+        }
       );
       const newToken = data?.data?.access_token ?? (data as { access_token?: string }).access_token;
       if (newToken && typeof window !== "undefined") {
         localStorage.setItem(AUTH_ACCESS_KEY, newToken);
+        api.defaults.headers.common.Authorization = `Bearer ${newToken}`;
         return newToken;
       }
       return null;
@@ -57,6 +77,7 @@ async function refreshAccessToken(): Promise<string | null> {
         localStorage.removeItem(AUTH_ACCESS_KEY);
         localStorage.removeItem(AUTH_REFRESH_KEY);
       }
+      delete api.defaults.headers.common.Authorization;
       return null;
     } finally {
       refreshPromise = null;
@@ -82,16 +103,55 @@ api.interceptors.response.use(
   }
 );
 
-export function setAuthTokens(access: string, refresh: string) {
+export function setAuthTokens(access: string, refresh?: string) {
   if (typeof window === "undefined") return;
   localStorage.setItem(AUTH_ACCESS_KEY, access);
-  localStorage.setItem(AUTH_REFRESH_KEY, refresh);
+  if (refresh) localStorage.setItem(AUTH_REFRESH_KEY, refresh);
+  api.defaults.headers.common.Authorization = `Bearer ${access}`;
 }
 
 export function clearAuthTokens() {
   if (typeof window === "undefined") return;
   localStorage.removeItem(AUTH_ACCESS_KEY);
   localStorage.removeItem(AUTH_REFRESH_KEY);
+  delete api.defaults.headers.common.Authorization;
+}
+
+export function extractAuthTokens(payload: unknown): TokenPair | null {
+  if (!payload || typeof payload !== "object") return null;
+  const root = payload as Record<string, unknown>;
+  const data = (root.data && typeof root.data === "object" ? root.data : null) as
+    | Record<string, unknown>
+    | null;
+
+  const candidates: Array<Record<string, unknown>> = [root];
+  if (data) candidates.push(data);
+  if (data?.tokens && typeof data.tokens === "object") {
+    candidates.push(data.tokens as Record<string, unknown>);
+  }
+
+  for (const source of candidates) {
+    const access =
+      (typeof source.access_token === "string" && source.access_token) ||
+      (typeof source.accessToken === "string" && source.accessToken) ||
+      (typeof source.token === "string" && source.token) ||
+      "";
+    const refresh =
+      (typeof source.refresh_token === "string" && source.refresh_token) ||
+      (typeof source.refreshToken === "string" && source.refreshToken) ||
+      "";
+    if (access) return { access, refresh: refresh || undefined };
+  }
+  return null;
+}
+
+export function initializeAuthHeaderFromStorage() {
+  const token = getAccessToken();
+  if (token) {
+    api.defaults.headers.common.Authorization = `Bearer ${token}`;
+  } else {
+    delete api.defaults.headers.common.Authorization;
+  }
 }
 
 export function getApiErrorMessage(err: unknown): string {

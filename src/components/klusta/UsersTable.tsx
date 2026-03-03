@@ -11,8 +11,9 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import Badge from "@/components/ui/badge/Badge";
-import { mockUsers } from "@/data/mock";
 import { EyeIcon } from "@/icons";
+import { useAdminUsers } from "@/lib/api/hooks";
+import { extractList, normalizeUser } from "@/lib/api/normalize";
 
 const statusColor: Record<string, "success" | "warning" | "error"> = {
   active: "success",
@@ -21,6 +22,11 @@ const statusColor: Record<string, "success" | "warning" | "error"> = {
 };
 
 export default function UsersTable() {
+  const { data, isLoading } = useAdminUsers({ limit: 50, offset: 1 });
+
+  const users = extractList(data?.data, ["users", "data", "items"]).map(normalizeUser);
+  console.log(data, "users")
+
   return (
     <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-white/[0.03]">
       <div className="max-w-full overflow-x-auto">
@@ -60,7 +66,7 @@ export default function UsersTable() {
             </TableRow>
           </TableHeader>
           <TableBody className="divide-y divide-gray-100 dark:divide-white/[0.05]">
-            {mockUsers.map((user) => (
+            {users.map((user) => (
               <TableRow key={user.id}>
                 <TableCell className="px-5 py-4 text-start">
                   <div className="flex items-center gap-3">
@@ -96,11 +102,11 @@ export default function UsersTable() {
                 <TableCell className="px-5 py-4 text-gray-600 text-theme-sm dark:text-gray-400">
                   {user.role}
                 </TableCell>
-                <TableCell className="px-5 py-4">
+                {/* <TableCell className="px-5 py-4">
                   <Badge size="sm" color={statusColor[user.status] ?? "success"}>
                     {user.status}
                   </Badge>
-                </TableCell>
+                </TableCell> */}
                 <TableCell className="px-5 py-4 text-end">
                   <Link
                     href={`/users/${user.id}`}
@@ -112,6 +118,20 @@ export default function UsersTable() {
                 </TableCell>
               </TableRow>
             ))}
+            {!isLoading && users.length === 0 && (
+              <TableRow>
+                <TableCell colSpan={5} className="px-5 py-8 text-center text-gray-500 dark:text-gray-400">
+                  No users found.
+                </TableCell>
+              </TableRow>
+            )}
+            {isLoading && (
+              <TableRow>
+                <TableCell colSpan={5} className="px-5 py-8 text-center text-gray-500 dark:text-gray-400">
+                  Loading users...
+                </TableCell>
+              </TableRow>
+            )}
           </TableBody>
         </Table>
       </div>

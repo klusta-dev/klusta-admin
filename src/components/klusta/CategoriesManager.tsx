@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useCallback } from "react";
+import React, { useState } from "react";
 import {
   Table,
   TableBody,
@@ -12,13 +12,14 @@ import { Modal } from "@/components/ui/modal";
 import Button from "@/components/ui/button/Button";
 import Label from "@/components/form/Label";
 import Input from "@/components/form/input/InputField";
-import { mockCategories } from "@/data/mock";
-import type { Category } from "@/data/mock";
 import { PlusIcon, PencilIcon, TrashBinIcon } from "@/icons";
-
-function newId() {
-  return Date.now().toString(36) + Math.random().toString(36).slice(2);
-}
+import {
+  useCategoryList,
+  useCreateCategory,
+  useUpdateCategory,
+  useDeleteCategory,
+} from "@/lib/api/hooks";
+import { extractList, normalizeCategory, type CategoryView } from "@/lib/api/normalize";
 
 function slugify(text: string) {
   return text
@@ -29,78 +30,65 @@ function slugify(text: string) {
 }
 
 export default function CategoriesManager() {
-  const [items, setItems] = useState<Category[]>(mockCategories);
+  const { data, isLoading } = useCategoryList({ page_id: 1, page_size: 200 });
+  const createCategory = useCreateCategory();
+  const updateCategory = useUpdateCategory();
+  const deleteCategory = useDeleteCategory();
+  const items = extractList(data?.data, ["categories", "data", "items"]).map(normalizeCategory);
   const [modalOpen, setModalOpen] = useState(false);
-  const [editing, setEditing] = useState<Category | null>(null);
+  const [editing, setEditing] = useState<CategoryView | null>(null);
   const [formName, setFormName] = useState("");
   const [formSlug, setFormSlug] = useState("");
   const [formDescription, setFormDescription] = useState("");
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
 
-  const openCreate = useCallback(() => {
+  const openCreate = () => {
     setEditing(null);
     setFormName("");
     setFormSlug("");
     setFormDescription("");
     setModalOpen(true);
-  }, []);
+  };
 
-  const openEdit = useCallback((category: Category) => {
+  const openEdit = (category: CategoryView) => {
     setEditing(category);
     setFormName(category.name);
     setFormSlug(category.slug);
     setFormDescription(category.description ?? "");
     setModalOpen(true);
-  }, []);
+  };
 
-  const closeModal = useCallback(() => {
+  const closeModal = () => {
     setModalOpen(false);
     setEditing(null);
     setFormName("");
     setFormSlug("");
     setFormDescription("");
-  }, []);
+  };
 
   const handleNameChange = (name: string) => {
     setFormName(name);
     if (!editing) setFormSlug(slugify(name));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formName.trim()) return;
-    const slug = formSlug.trim() || slugify(formName);
+    const categoryName = formName.trim();
     if (editing) {
-      setItems((prev) =>
-        prev.map((c) =>
-          c.id === editing.id
-            ? {
-                ...c,
-                name: formName.trim(),
-                slug,
-                description: formDescription.trim() || undefined,
-              }
-            : c
-        )
-      );
+      await updateCategory.mutateAsync({
+        id: editing.id,
+        body: { id: editing.id, category: categoryName },
+      });
     } else {
-      setItems((prev) => [
-        ...prev,
-        {
-          id: newId(),
-          name: formName.trim(),
-          slug,
-          description: formDescription.trim() || undefined,
-          createdAt: new Date().toISOString().slice(0, 10),
-        },
-      ]);
+      await createCategory.mutateAsync({ category: categoryName });
     }
     closeModal();
   };
 
-  const handleDelete = (id: string) => {
+  const handleDelete = async (id: string) => {
     if (deleteConfirm === id) {
-      setItems((prev) => prev.filter((c) => c.id !== id));
+      await deleteCategory.mutateAsync(id);
       setDeleteConfirm(null);
     } else {
       setDeleteConfirm(id);
@@ -150,6 +138,13 @@ export default function CategoriesManager() {
               </TableRow>
             </TableHeader>
             <TableBody className="divide-y divide-gray-100 dark:divide-white/[0.05]">
+              {isLoading && (
+                <TableRow>
+                  <TableCell colSpan={4} className="px-5 py-8 text-center text-gray-500 dark:text-gray-400">
+                    Loading categories...
+                  </TableCell>
+                </TableRow>
+              )}
               {items.map((category) => (
                 <TableRow key={category.id}>
                   <TableCell className="px-5 py-4 font-medium text-gray-800 text-theme-sm dark:text-white/90">

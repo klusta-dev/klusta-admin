@@ -11,8 +11,9 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import Badge from "@/components/ui/badge/Badge";
-import { mockProperties } from "@/data/mock";
 import { EyeIcon } from "@/icons";
+import type { PropertyView } from "@/lib/api/normalize";
+import { formatAmount } from "@/lib/format";
 
 const statusColor: Record<string, "success" | "warning" | "error"> = {
   listed: "success",
@@ -20,7 +21,11 @@ const statusColor: Record<string, "success" | "warning" | "error"> = {
   unlisted: "error",
 };
 
-export default function PropertiesTable() {
+interface PropertiesTableProps {
+  properties: PropertyView[];
+}
+
+export default function PropertiesTable({ properties }: PropertiesTableProps) {
   return (
     <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-white/3">
       <div className="max-w-full overflow-x-auto">
@@ -66,7 +71,7 @@ export default function PropertiesTable() {
             </TableRow>
           </TableHeader>
           <TableBody className="divide-y divide-gray-100 dark:divide-white/5">
-            {mockProperties.map((property) => (
+            {properties.map((property) => (
               <TableRow key={property.id}>
                 <TableCell className="px-5 py-4 text-start">
                   <div className="flex items-center gap-3">
@@ -102,7 +107,7 @@ export default function PropertiesTable() {
                   {property.categoryName}
                 </TableCell>
                 <TableCell className="px-5 py-4 font-medium text-typography text-theme-sm dark:text-white/90">
-                  {property.price}
+                  {formatAmount(property.price)}
                 </TableCell>
                 <TableCell className="px-5 py-4">
                   <Badge size="sm" color={statusColor[property.status] ?? "success"}>
@@ -120,6 +125,13 @@ export default function PropertiesTable() {
                 </TableCell>
               </TableRow>
             ))}
+            {properties.length === 0 && (
+              <TableRow>
+                <TableCell colSpan={6} className="px-5 py-8 text-center text-gray-500 dark:text-gray-400">
+                  No properties found.
+                </TableCell>
+              </TableRow>
+            )}
           </TableBody>
         </Table>
       </div>

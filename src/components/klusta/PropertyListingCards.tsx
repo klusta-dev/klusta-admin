@@ -4,10 +4,11 @@ import React, { useState, useMemo } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import Badge from "@/components/ui/badge/Badge";
-import { mockProperties } from "@/data/mock";
-import type { Property } from "@/data/mock";
 import { ListIcon, TableIcon } from "@/icons";
 import PropertiesTable from "@/components/klusta/PropertiesTable";
+import { usePropertyList } from "@/lib/api/hooks";
+import { extractList, normalizeProperty, type PropertyView } from "@/lib/api/normalize";
+import { formatAmount } from "@/lib/format";
 
 const statusColor: Record<string, "success" | "warning" | "error"> = {
   listed: "success",
@@ -51,13 +52,15 @@ const FILTER_CHIPS = [
 ] as const;
 
 export default function PropertyListingCards() {
+  const { data, isLoading } = usePropertyList({ page_size: 10, page_id: 1 });
   const [viewMode, setViewMode] = useState<"listings" | "table">("listings");
   const [search, setSearch] = useState("");
   const [location, setLocation] = useState("All locations");
   const [filter, setFilter] = useState<"all" | "listed" | "pending" | "unlisted">("all");
+  const properties = extractList(data?.data, ["properties", "data", "items"]).map(normalizeProperty);
 
   const filtered = useMemo(() => {
-    let list = mockProperties;
+    let list = properties;
     if (search.trim()) {
       const q = search.toLowerCase();
       list = list.filter(
@@ -72,7 +75,7 @@ export default function PropertyListingCards() {
     if (filter !== "all")
       list = list.filter((p) => p.status === filter);
     return list;
-  }, [search, location, filter]);
+  }, [properties, search, location, filter]);
 
   return (
     <div className="space-y-8">
@@ -163,10 +166,15 @@ export default function PropertyListingCards() {
       </div>
 
       {viewMode === "table" ? (
-        <PropertiesTable />
+        <PropertiesTable properties={filtered} />
       ) : (
         <section>
-          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          {isLoading && (
+            <p className="py-8 text-center text-theme-sm text-gray-500 dark:text-gray-400">
+              Loading properties...
+            </p>
+          )}
+          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4">
             {filtered.map((property) => (
               <PropertyLargeCard key={property.id} property={property} />
             ))}
@@ -182,7 +190,7 @@ export default function PropertyListingCards() {
   );
 }
 
-function PropertyLargeCard({ property }: { property: Property }) {
+function PropertyLargeCard({ property }: { property: PropertyView }) {
   const imgSrc = property.images?.[0] ?? property.image;
   return (
     <Link
@@ -228,7 +236,7 @@ function PropertyLargeCard({ property }: { property: Property }) {
           </p>
         )}
         <p className="mt-2 font-semibold text-primary text-theme-sm dark:text-primary-50">
-          {property.price}
+          {formatAmount(property.price)}
         </p>
       </div>
     </Link>

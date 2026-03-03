@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useCallback } from "react";
+import React, { useState } from "react";
 import {
   Table,
   TableBody,
@@ -12,71 +12,65 @@ import { Modal } from "@/components/ui/modal";
 import Button from "@/components/ui/button/Button";
 import Label from "@/components/form/Label";
 import Input from "@/components/form/input/InputField";
-import { mockAmenities } from "@/data/mock";
-import type { Amenity } from "@/data/mock";
 import { PlusIcon, PencilIcon, TrashBinIcon } from "@/icons";
-
-function newId() {
-  return Date.now().toString(36) + Math.random().toString(36).slice(2);
-}
+import {
+  useAmenitiesList,
+  useCreateAmenity,
+  useUpdateAmenity,
+  useDeleteAmenity,
+} from "@/lib/api/hooks";
+import { extractList, normalizeAmenity, type AmenityView } from "@/lib/api/normalize";
 
 export default function AmenitiesManager() {
-  const [items, setItems] = useState<Amenity[]>(mockAmenities);
+  const { data, isLoading } = useAmenitiesList({ page_id: 1, page_size: 200 });
+  const createAmenity = useCreateAmenity();
+  const updateAmenity = useUpdateAmenity();
+  const deleteAmenity = useDeleteAmenity();
+  const items = extractList(data?.data, ["amenities", "data", "items"]).map(normalizeAmenity);
   const [modalOpen, setModalOpen] = useState(false);
-  const [editing, setEditing] = useState<Amenity | null>(null);
+  const [editing, setEditing] = useState<AmenityView | null>(null);
   const [formName, setFormName] = useState("");
   const [formDescription, setFormDescription] = useState("");
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
 
-  const openCreate = useCallback(() => {
+  const openCreate = () => {
     setEditing(null);
     setFormName("");
     setFormDescription("");
     setModalOpen(true);
-  }, []);
+  };
 
-  const openEdit = useCallback((amenity: Amenity) => {
+  const openEdit = (amenity: AmenityView) => {
     setEditing(amenity);
     setFormName(amenity.name);
     setFormDescription(amenity.description ?? "");
     setModalOpen(true);
-  }, []);
+  };
 
-  const closeModal = useCallback(() => {
+  const closeModal = () => {
     setModalOpen(false);
     setEditing(null);
     setFormName("");
     setFormDescription("");
-  }, []);
+  };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formName.trim()) return;
     if (editing) {
-      setItems((prev) =>
-        prev.map((a) =>
-          a.id === editing.id
-            ? { ...a, name: formName.trim(), description: formDescription.trim() || undefined }
-            : a
-        )
-      );
+      await updateAmenity.mutateAsync({
+        id: editing.id,
+        body: { id: editing.id, amenities: formName.trim() },
+      });
     } else {
-      setItems((prev) => [
-        ...prev,
-        {
-          id: newId(),
-          name: formName.trim(),
-          description: formDescription.trim() || undefined,
-          createdAt: new Date().toISOString().slice(0, 10),
-        },
-      ]);
+      await createAmenity.mutateAsync({ amenity: formName.trim() });
     }
     closeModal();
   };
 
-  const handleDelete = (id: string) => {
+  const handleDelete = async (id: string) => {
     if (deleteConfirm === id) {
-      setItems((prev) => prev.filter((a) => a.id !== id));
+      await deleteAmenity.mutateAsync(id);
       setDeleteConfirm(null);
     } else {
       setDeleteConfirm(id);
@@ -120,6 +114,13 @@ export default function AmenitiesManager() {
               </TableRow>
             </TableHeader>
             <TableBody className="divide-y divide-gray-100 dark:divide-white/[0.05]">
+              {isLoading && (
+                <TableRow>
+                  <TableCell colSpan={3} className="px-5 py-8 text-center text-gray-500 dark:text-gray-400">
+                    Loading amenities...
+                  </TableCell>
+                </TableRow>
+              )}
               {items.map((amenity) => (
                 <TableRow key={amenity.id}>
                   <TableCell className="px-5 py-4 font-medium text-gray-800 text-theme-sm dark:text-white/90">

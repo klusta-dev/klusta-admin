@@ -6,7 +6,8 @@ import Link from "next/link";
 import Badge from "@/components/ui/badge/Badge";
 import Button from "@/components/ui/button/Button";
 import { ChevronLeftIcon, MailIcon, UserIcon } from "@/icons";
-import type { User } from "@/data/mock";
+import { useAdminUser, useAdminUserStatusMutation } from "@/lib/api/hooks";
+import { normalizeUser } from "@/lib/api/normalize";
 
 const statusColor: Record<string, "success" | "warning" | "error"> = {
   active: "success",
@@ -15,14 +16,31 @@ const statusColor: Record<string, "success" | "warning" | "error"> = {
 };
 
 interface UserDetailsCardProps {
-  user: User;
+  userId: string;
 }
 
-export default function UserDetailsCard({ user: initialUser }: UserDetailsCardProps) {
-  const [status, setStatus] = useState<User["status"]>(initialUser.status);
+export default function UserDetailsCard({ userId }: UserDetailsCardProps) {
+  const { data, isLoading } = useAdminUser(userId);
+  const updateStatus = useAdminUserStatusMutation();
+  const user = normalizeUser(data?.data, 0);
+  const [status, setStatus] = useState(user.status);
 
-  const handleActivate = () => setStatus("active");
-  const handleDeactivate = () => setStatus("inactive");
+  React.useEffect(() => {
+    setStatus(user.status);
+  }, [user.status]);
+
+  const handleActivate = async () => {
+    await updateStatus.mutateAsync({ id: user.id, body: { id: user.id, is_active: true } });
+    setStatus("active");
+  };
+  const handleDeactivate = async () => {
+    await updateStatus.mutateAsync({ id: user.id, body: { id: user.id, is_active: false } });
+    setStatus("inactive");
+  };
+
+  if (isLoading) {
+    return <div className="text-theme-sm text-gray-500 dark:text-gray-400">Loading user details...</div>;
+  }
 
   return (
     <div className="space-y-6">
@@ -40,17 +58,17 @@ export default function UserDetailsCard({ user: initialUser }: UserDetailsCardPr
         <div className="flex flex-col gap-6 sm:flex-row sm:items-start">
           <div className="flex shrink-0">
             <div className="w-24 h-24 overflow-hidden rounded-2xl bg-gray-200 dark:bg-gray-700">
-              {initialUser.avatar ? (
+              {user.avatar ? (
                 <Image
                   width={96}
                   height={96}
-                  src={initialUser.avatar}
-                  alt={initialUser.name}
+                  src={user.avatar}
+                  alt={user.name}
                   className="h-full w-full object-cover"
                 />
               ) : (
                 <span className="flex h-full w-full items-center justify-center text-3xl font-semibold text-gray-500 dark:text-gray-400">
-                  {initialUser.name.charAt(0)}
+                  {user.name.charAt(0)}
                 </span>
               )}
             </div>
@@ -59,9 +77,9 @@ export default function UserDetailsCard({ user: initialUser }: UserDetailsCardPr
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div className="flex flex-wrap items-center gap-3">
                 <h1 className="text-xl font-semibold text-typography dark:text-white/90">
-                  {initialUser.name}
+                  {user.name}
                 </h1>
-                <Badge size="sm" color={statusColor[status]}>
+                <Badge size="sm" color={statusColor[status ?? "pending"]}>
                   {status}
                 </Badge>
               </div>
@@ -70,6 +88,7 @@ export default function UserDetailsCard({ user: initialUser }: UserDetailsCardPr
                   <Button
                     size="sm"
                     onClick={handleActivate}
+                    disabled={updateStatus.isPending}
                     className="!bg-success-500 hover:!bg-success-600"
                   >
                     Activate user
@@ -80,6 +99,7 @@ export default function UserDetailsCard({ user: initialUser }: UserDetailsCardPr
                     size="sm"
                     variant="outline"
                     onClick={handleDeactivate}
+                    disabled={updateStatus.isPending}
                     className="!ring-klusta-error/50 hover:!bg-klusta-error-10 hover:!text-klusta-error hover:!ring-klusta-error/30"
                   >
                     Deactivate user
@@ -88,7 +108,7 @@ export default function UserDetailsCard({ user: initialUser }: UserDetailsCardPr
               </div>
             </div>
             <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-              {initialUser.role}
+              {user.role}
             </p>
             <dl className="mt-6 grid gap-4 sm:grid-cols-1">
               <div className="flex items-center gap-3">
@@ -100,11 +120,11 @@ export default function UserDetailsCard({ user: initialUser }: UserDetailsCardPr
                     Email
                   </dt>
                   <dd className="text-theme-sm font-medium text-typography dark:text-white/90">
-                    {initialUser.email}
+                    {user.email}
                   </dd>
                 </div>
               </div>
-              {initialUser.phone && (
+              {user.phone && (
                 <div className="flex items-center gap-3">
                   <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-secondary-10 text-secondary dark:bg-secondary-50">
                     <UserIcon className="size-5" />
@@ -114,7 +134,7 @@ export default function UserDetailsCard({ user: initialUser }: UserDetailsCardPr
                       Phone
                     </dt>
                     <dd className="text-theme-sm font-medium text-typography dark:text-white/90">
-                      {initialUser.phone}
+                      {user.phone}
                     </dd>
                   </div>
                 </div>
@@ -130,11 +150,13 @@ export default function UserDetailsCard({ user: initialUser }: UserDetailsCardPr
                     Joined at
                   </dt>
                   <dd className="text-theme-sm font-medium text-typography dark:text-white/90">
-                    {new Date(initialUser.joinedAt).toLocaleDateString("en-US", {
-                      year: "numeric",
-                      month: "long",
-                      day: "numeric",
-                    })}
+                    {user.joinedAt
+                      ? new Date(user.joinedAt).toLocaleDateString("en-US", {
+                          year: "numeric",
+                          month: "long",
+                          day: "numeric",
+                        })
+                      : "-"}
                   </dd>
                 </div>
               </div>

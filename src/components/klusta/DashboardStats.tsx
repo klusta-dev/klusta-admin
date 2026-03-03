@@ -3,8 +3,8 @@
 import React from "react";
 import Link from "next/link";
 import { UserCircleIcon, BoxCubeIcon, ListIcon, GroupIcon, FolderIcon } from "@/icons";
-import { getDashboardStats } from "@/data/mock";
 import { useAdminStats } from "@/lib/api/hooks";
+import { formatNumber } from "@/lib/format";
 
 const statCards = [
   { key: "users", label: "Total Users", dataKey: "total_users" as const, href: "/users", icon: <GroupIcon className="size-6" />, bgIcon: "bg-primary-10", textIcon: "text-primary" },
@@ -15,20 +15,33 @@ const statCards = [
 ];
 
 export default function DashboardStats() {
-  const { data: apiData, isSuccess } = useAdminStats();
-  const fallback = getDashboardStats();
+  const { data: apiData, isLoading, isError } = useAdminStats();
+  const stats = (apiData?.data ?? {}) as Record<string, unknown>;
 
   const getValue = (card: (typeof statCards)[0]) => {
-    if (isSuccess && apiData?.data && card.dataKey in apiData.data) {
-      const v = (apiData.data as Record<string, number>)[card.dataKey];
-      if (typeof v === "number") return String(v);
-    }
+    if (isLoading) return "...";
+    if (isError) return "—";
+
+    const keyVariants: Record<(typeof statCards)[0]["dataKey"], string[]> = {
+      total_users: ["total_users", "totalUsers"],
+      active_users: ["active_users", "activeUsers"],
+      total_amenities: ["total_amenities", "totalAmenities"],
+      total_properties: ["total_properties", "totalProperties"],
+      total_categories: ["total_categories", "totalCategories"],
+    };
+
+    const v = keyVariants[card.dataKey]
+      .map((key) => stats[key])
+      .find((value) => typeof value === "number");
+
+    if (typeof v === "number") return formatNumber(v);
+
     switch (card.dataKey) {
-      case "total_users": return String(fallback.totalUsers);
-      case "active_users": return String(fallback.activeUsers);
-      case "total_amenities": return String(fallback.totalAmenities);
-      case "total_properties": return String(fallback.totalProperties);
-      case "total_categories": return String(fallback.totalCategories);
+      case "total_users": return "0";
+      case "active_users": return "0";
+      case "total_amenities": return "0";
+      case "total_properties": return "0";
+      case "total_categories": return "0";
       default: return "—";
     }
   };

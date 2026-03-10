@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useCallback } from "react";
+import React, { useState } from "react";
 import {
   Table,
   TableBody,
@@ -47,21 +47,21 @@ export default function AmenitiesManager() {
     setEditing(null);
     setFormName("");
     setModalOpen(true);
-  }, []);
+  };
 
   const openEdit = useCallback((amenity: AmenityDisplay) => {
     setEditing(amenity);
     setFormName(amenity.name);
     setModalOpen(true);
-  }, []);
+  };
 
-  const closeModal = useCallback(() => {
+  const closeModal = () => {
     setModalOpen(false);
     setEditing(null);
     setFormName("");
   }, []);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formName.trim()) return;
     const name = formName.trim();
@@ -75,7 +75,7 @@ export default function AmenitiesManager() {
     }
   };
 
-  const handleDelete = (id: string) => {
+  const handleDelete = async (id: string) => {
     if (deleteConfirm === id) {
       deleteMutation.mutate(id);
       setDeleteConfirm(null);

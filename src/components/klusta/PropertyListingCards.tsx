@@ -51,6 +51,7 @@ const FILTER_CHIPS = [
 ] as const;
 
 export default function PropertyListingCards() {
+  const { data, isLoading } = usePropertyList({ page_size: 10, page_id: 1 });
   const [viewMode, setViewMode] = useState<"listings" | "table">("listings");
   const [search, setSearch] = useState("");
   const [location, setLocation] = useState("All locations");
@@ -183,9 +184,15 @@ export default function PropertyListingCards() {
 
       {viewMode === "table" ? (
         <PropertiesTable properties={filtered} />
+        <PropertiesTable properties={filtered} />
       ) : (
         <section>
-          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          {isLoading && (
+            <p className="py-8 text-center text-theme-sm text-gray-500 dark:text-gray-400">
+              Loading properties...
+            </p>
+          )}
+          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4">
             {filtered.map((property) => (
               <PropertyLargeCard key={property.id} property={property} />
             ))}

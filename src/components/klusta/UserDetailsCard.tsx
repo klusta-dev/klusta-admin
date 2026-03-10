@@ -53,17 +53,17 @@ export default function UserDetailsCard({ user: initialUser, userId }: UserDetai
         <div className="flex flex-col gap-6 sm:flex-row sm:items-start">
           <div className="flex shrink-0">
             <div className="w-24 h-24 overflow-hidden rounded-2xl bg-gray-200 dark:bg-gray-700">
-              {initialUser.avatar ? (
+              {user.avatar ? (
                 <Image
                   width={96}
                   height={96}
-                  src={initialUser.avatar}
-                  alt={initialUser.name}
+                  src={user.avatar}
+                  alt={user.name}
                   className="h-full w-full object-cover"
                 />
               ) : (
                 <span className="flex h-full w-full items-center justify-center text-3xl font-semibold text-gray-500 dark:text-gray-400">
-                  {initialUser.name.charAt(0)}
+                  {user.name.charAt(0)}
                 </span>
               )}
             </div>
@@ -72,9 +72,9 @@ export default function UserDetailsCard({ user: initialUser, userId }: UserDetai
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div className="flex flex-wrap items-center gap-3">
                 <h1 className="text-xl font-semibold text-typography dark:text-white/90">
-                  {initialUser.name}
+                  {user.name}
                 </h1>
-                <Badge size="sm" color={statusColor[status]}>
+                <Badge size="sm" color={statusColor[status ?? "pending"]}>
                   {status}
                 </Badge>
               </div>
@@ -103,7 +103,7 @@ export default function UserDetailsCard({ user: initialUser, userId }: UserDetai
               </div>
             </div>
             <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-              {initialUser.role}
+              {user.role}
             </p>
             <dl className="mt-6 grid gap-4 sm:grid-cols-1">
               <div className="flex items-center gap-3">
@@ -115,11 +115,11 @@ export default function UserDetailsCard({ user: initialUser, userId }: UserDetai
                     Email
                   </dt>
                   <dd className="text-theme-sm font-medium text-typography dark:text-white/90">
-                    {initialUser.email}
+                    {user.email}
                   </dd>
                 </div>
               </div>
-              {initialUser.phone && (
+              {user.phone && (
                 <div className="flex items-center gap-3">
                   <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-secondary-10 text-secondary dark:bg-secondary-50">
                     <UserIcon className="size-5" />
@@ -129,7 +129,7 @@ export default function UserDetailsCard({ user: initialUser, userId }: UserDetai
                       Phone
                     </dt>
                     <dd className="text-theme-sm font-medium text-typography dark:text-white/90">
-                      {initialUser.phone}
+                      {user.phone}
                     </dd>
                   </div>
                 </div>
@@ -145,11 +145,13 @@ export default function UserDetailsCard({ user: initialUser, userId }: UserDetai
                     Joined at
                   </dt>
                   <dd className="text-theme-sm font-medium text-typography dark:text-white/90">
-                    {new Date(initialUser.joinedAt).toLocaleDateString("en-US", {
-                      year: "numeric",
-                      month: "long",
-                      day: "numeric",
-                    })}
+                    {user.joinedAt
+                      ? new Date(user.joinedAt).toLocaleDateString("en-US", {
+                          year: "numeric",
+                          month: "long",
+                          day: "numeric",
+                        })
+                      : "-"}
                   </dd>
                 </div>
               </div>

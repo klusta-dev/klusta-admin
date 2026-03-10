@@ -4,6 +4,7 @@ import React from "react";
 import Link from "next/link";
 import { UserCircleIcon, BoxCubeIcon, ListIcon, GroupIcon, FolderIcon } from "@/icons";
 import { useAdminStats } from "@/lib/api/hooks";
+import { formatNumber } from "@/lib/format";
 
 const statCards = [
   { key: "users", label: "Total Users", dataKey: "total_users" as const, href: "/users", icon: <GroupIcon className="size-6" />, bgIcon: "bg-primary-10", textIcon: "text-primary" },

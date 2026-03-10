@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import Button from "@/components/ui/button/Button";
+import { formatAmount } from "@/lib/format";
 
 interface PropertyDetailsStickyBarProps {
   propertyId: string;
@@ -59,7 +60,7 @@ export default function PropertyDetailsStickyBar({
       <div className="mx-auto flex max-w-(--breakpoint-2xl) flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex flex-wrap items-center gap-3">
           <p className="text-lg font-semibold text-typography dark:text-white/90">
-            {price}
+            {formatAmount(price)}
           </p>
           {negotiable && (
             <span className="rounded-lg bg-warning-100 px-2.5 py-1 text-theme-xs font-medium text-warning-700 dark:bg-warning-500/20 dark:text-warning-400">

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useCallback } from "react";
+import React, { useState } from "react";
 import {
   Table,
   TableBody,
@@ -57,16 +57,16 @@ export default function CategoriesManager() {
     setFormName("");
     setFormSlug("");
     setModalOpen(true);
-  }, []);
+  };
 
   const openEdit = useCallback((category: CategoryDisplay) => {
     setEditing(category);
     setFormName(category.name);
     setFormSlug(category.slug);
     setModalOpen(true);
-  }, []);
+  };
 
-  const closeModal = useCallback(() => {
+  const closeModal = () => {
     setModalOpen(false);
     setEditing(null);
     setFormName("");
@@ -78,9 +78,10 @@ export default function CategoriesManager() {
     if (!editing) setFormSlug(slugify(name));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formName.trim()) return;
+    const categoryName = formName.trim();
     const categoryName = formName.trim();
     if (editing) {
       updateMutation.mutate(
@@ -98,7 +99,7 @@ export default function CategoriesManager() {
     }
   };
 
-  const handleDelete = (id: string) => {
+  const handleDelete = async (id: string) => {
     if (deleteConfirm === id) {
       deleteMutation.mutate(id);
       setDeleteConfirm(null);

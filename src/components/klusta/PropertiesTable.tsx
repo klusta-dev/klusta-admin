@@ -11,8 +11,8 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import Badge from "@/components/ui/badge/Badge";
-import { mockProperties } from "@/data/mock";
 import { EyeIcon } from "@/icons";
+import type { PropertyDisplay } from "@/lib/api/types";
 
 const statusColor: Record<string, "success" | "warning" | "error"> = {
   listed: "success",
@@ -20,7 +20,11 @@ const statusColor: Record<string, "success" | "warning" | "error"> = {
   unlisted: "error",
 };
 
-export default function PropertiesTable() {
+interface PropertiesTableProps {
+  properties: PropertyDisplay[];
+}
+
+export default function PropertiesTable({ properties }: PropertiesTableProps) {
   return (
     <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-white/3">
       <div className="max-w-full overflow-x-auto">
@@ -66,7 +70,7 @@ export default function PropertiesTable() {
             </TableRow>
           </TableHeader>
           <TableBody className="divide-y divide-gray-100 dark:divide-white/5">
-            {mockProperties.map((property) => (
+            {properties.map((property) => (
               <TableRow key={property.id}>
                 <TableCell className="px-5 py-4 text-start">
                   <div className="flex items-center gap-3">
@@ -89,14 +93,16 @@ export default function PropertiesTable() {
                       <span className="block font-medium text-gray-800 text-theme-sm dark:text-white/90">
                         {property.title}
                       </span>
-                      <span className="block text-gray-500 text-theme-xs dark:text-gray-400">
-                        {property.slug}
-                      </span>
+                      {property.slug && (
+                        <span className="block text-gray-500 text-theme-xs dark:text-gray-400">
+                          {property.slug}
+                        </span>
+                      )}
                     </div>
                   </div>
                 </TableCell>
                 <TableCell className="px-5 py-4 text-gray-600 text-theme-sm dark:text-gray-400">
-                  {property.address}, {property.city}
+                  {[property.address, property.city].filter(Boolean).join(", ") || "—"}
                 </TableCell>
                 <TableCell className="px-5 py-4 text-gray-600 text-theme-sm dark:text-gray-400">
                   {property.categoryName}
@@ -123,6 +129,11 @@ export default function PropertiesTable() {
           </TableBody>
         </Table>
       </div>
+      {properties.length === 0 && (
+        <p className="py-12 text-center text-theme-sm text-gray-500 dark:text-gray-400">
+          No properties to show.
+        </p>
+      )}
     </div>
   );
 }

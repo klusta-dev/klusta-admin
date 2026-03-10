@@ -2,9 +2,27 @@
 
 import React, { useState } from "react";
 import Badge from "@/components/ui/badge/Badge";
-import { mockReports } from "@/data/mock";
-import type { Report, ReportStatus } from "@/data/mock";
 import { EyeIcon } from "@/icons";
+
+export type ReportStatus = "open" | "in_review" | "resolved" | "dismissed";
+export type ReportType = "property" | "user" | "payment" | "other";
+
+export interface Report {
+  id: string;
+  type: ReportType;
+  subject: string;
+  description: string;
+  reporterId: string;
+  reporterName: string;
+  reportedEntityType: "property" | "user";
+  reportedEntityId: string;
+  reportedEntityName: string;
+  status: ReportStatus;
+  createdAt: string;
+  updatedAt: string;
+}
+
+const REPORTS: Report[] = [];
 
 const statusColor: Record<ReportStatus, "success" | "warning" | "error" | "info"> = {
   open: "error",
@@ -13,7 +31,7 @@ const statusColor: Record<ReportStatus, "success" | "warning" | "error" | "info"
   dismissed: "info",
 };
 
-const typeLabel: Record<Report["type"], string> = {
+const typeLabel: Record<ReportType, string> = {
   property: "Property",
   user: "User",
   payment: "Payment",
@@ -23,8 +41,7 @@ const typeLabel: Record<Report["type"], string> = {
 export default function ReportsList() {
   const [statusFilter, setStatusFilter] = useState<ReportStatus | "all">("all");
 
-  const filtered =
-    statusFilter === "all" ? mockReports : mockReports.filter((r) => r.status === statusFilter);
+  const filtered = statusFilter === "all" ? REPORTS : REPORTS.filter((r) => r.status === statusFilter);
 
   return (
     <div className="space-y-6">

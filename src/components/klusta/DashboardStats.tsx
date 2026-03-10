@@ -3,7 +3,6 @@
 import React from "react";
 import Link from "next/link";
 import { UserCircleIcon, BoxCubeIcon, ListIcon, GroupIcon, FolderIcon } from "@/icons";
-import { getDashboardStats } from "@/data/mock";
 import { useAdminStats } from "@/lib/api/hooks";
 
 const statCards = [
@@ -15,22 +14,14 @@ const statCards = [
 ];
 
 export default function DashboardStats() {
-  const { data: apiData, isSuccess } = useAdminStats();
-  const fallback = getDashboardStats();
+  const { data: apiData, isLoading, isSuccess } = useAdminStats();
 
   const getValue = (card: (typeof statCards)[0]) => {
     if (isSuccess && apiData?.data && card.dataKey in apiData.data) {
       const v = (apiData.data as Record<string, number>)[card.dataKey];
       if (typeof v === "number") return String(v);
     }
-    switch (card.dataKey) {
-      case "total_users": return String(fallback.totalUsers);
-      case "active_users": return String(fallback.activeUsers);
-      case "total_amenities": return String(fallback.totalAmenities);
-      case "total_properties": return String(fallback.totalProperties);
-      case "total_categories": return String(fallback.totalCategories);
-      default: return "—";
-    }
+    return isLoading ? "…" : "0";
   };
 
   return (

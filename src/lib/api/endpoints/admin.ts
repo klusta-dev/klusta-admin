@@ -1,6 +1,6 @@
 import { api } from "../client";
 import type { SuccessResponse } from "../types";
-import type { AdminStats, AdminUsersParams, ActivateDeactivateUserReq } from "../types";
+import type { AdminStats, AdminUserDetail, AdminUserListItem, AdminUsersParams, ActivateDeactivateUserReq } from "../types";
 
 export async function getAdminStats() {
   const { data } = await api.get<SuccessResponse<AdminStats>>("/admin/stats");
@@ -8,7 +8,7 @@ export async function getAdminStats() {
 }
 
 export async function getAdminUsers(params: AdminUsersParams) {
-  const { data } = await api.get<SuccessResponse<{ users?: unknown[]; total?: number }>>(
+  const { data } = await api.get<SuccessResponse<{ users?: AdminUserListItem[]; total?: number }>>(
     "/admin/users",
     { params }
   );
@@ -16,7 +16,7 @@ export async function getAdminUsers(params: AdminUsersParams) {
 }
 
 export async function getAdminUser(id: string) {
-  const { data } = await api.get<SuccessResponse>(`/admin/users/${id}`);
+  const { data } = await api.get<SuccessResponse<AdminUserDetail>>(`/admin/users/${id}`);
   return data;
 }
 

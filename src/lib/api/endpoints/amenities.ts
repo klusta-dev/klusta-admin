@@ -1,9 +1,12 @@
 import { api } from "../client";
 import type { SuccessResponse } from "../types";
-import type { AmenitiesListParams, AmenityReq, UpdateAmenityReq } from "../types";
+import type { AmenitiesListParams, AmenityListItem, AmenityReq, UpdateAmenityReq } from "../types";
 
 export async function getAmenitiesList(params: AmenitiesListParams) {
-  const { data } = await api.get<SuccessResponse>( "/amenities/amenities-list", { params });
+  const { data } = await api.get<SuccessResponse<{ amenities?: AmenityListItem[]; total?: number }>>(
+    "/amenities/amenities-list",
+    { params }
+  );
   return data;
 }
 

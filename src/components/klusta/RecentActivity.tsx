@@ -10,8 +10,23 @@ import {
   CheckCircleIcon,
   ArrowRightIcon,
 } from "@/icons";
-import { mockRecentActivity } from "@/data/mock";
-import type { ActivityType } from "@/data/mock";
+export type ActivityType =
+  | "user_added"
+  | "user_activated"
+  | "property_listed"
+  | "property_updated"
+  | "amenity_created"
+  | "category_created";
+
+interface Activity {
+  id: string;
+  type: ActivityType;
+  message: string;
+  createdAt: string;
+  href?: string;
+}
+
+const EMPTY_ACTIVITIES: Activity[] = [];
 
 const activityConfig: Record<
   ActivityType,
@@ -65,7 +80,7 @@ function formatTimeAgo(iso: string): string {
 }
 
 export default function RecentActivity() {
-  const activities = mockRecentActivity.slice(0, 8);
+  const activities = EMPTY_ACTIVITIES.slice(0, 8);
 
   return (
     <div className="rounded-2xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-white/3">
@@ -78,7 +93,12 @@ export default function RecentActivity() {
         </p>
       </div>
       <div className="divide-y divide-gray-100 dark:divide-white/5">
-        {activities.map((activity) => {
+        {activities.length === 0 ? (
+          <div className="px-5 py-12 text-center text-theme-sm text-gray-500 dark:text-gray-400 md:px-6">
+            No recent activity
+          </div>
+        ) : (
+        activities.map((activity) => {
           const config = activityConfig[activity.type];
           const content = (
             <div className="flex items-start gap-3 px-5 py-4 md:px-6">
@@ -116,7 +136,8 @@ export default function RecentActivity() {
           }
 
           return <div key={activity.id}>{content}</div>;
-        })}
+        })
+        )}
       </div>
     </div>
   );

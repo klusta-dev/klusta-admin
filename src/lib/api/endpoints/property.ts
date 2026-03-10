@@ -1,9 +1,12 @@
 import { api } from "../client";
 import type { SuccessResponse } from "../types";
-import type { PropertyListParams, PropertyOwnerListParams } from "../types";
+import type { PropertyListItem, PropertyListParams, PropertyOwnerListParams } from "../types";
 
 export async function getPropertyList(params: PropertyListParams) {
-  const { data } = await api.get<SuccessResponse>("/property/property-list", { params });
+  const { data } = await api.get<SuccessResponse<{ properties?: PropertyListItem[]; total?: number }>>(
+    "/property/property-list",
+    { params }
+  );
   return data;
 }
 
@@ -13,7 +16,7 @@ export async function getPropertyOwnerList(params: PropertyOwnerListParams) {
 }
 
 export async function getProperty(id: string) {
-  const { data } = await api.get<SuccessResponse>(`/property/get-property/${id}`);
+  const { data } = await api.get<SuccessResponse<PropertyListItem>>(`/property/get-property/${id}`);
   return data;
 }
 

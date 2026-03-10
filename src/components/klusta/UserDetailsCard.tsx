@@ -6,7 +6,8 @@ import Link from "next/link";
 import Badge from "@/components/ui/badge/Badge";
 import Button from "@/components/ui/button/Button";
 import { ChevronLeftIcon, MailIcon, UserIcon } from "@/icons";
-import type { User } from "@/data/mock";
+import type { UserDisplay } from "@/lib/api/types";
+import { useAdminUserStatusMutation } from "@/lib/api/hooks";
 
 const statusColor: Record<string, "success" | "warning" | "error"> = {
   active: "success",
@@ -15,14 +16,26 @@ const statusColor: Record<string, "success" | "warning" | "error"> = {
 };
 
 interface UserDetailsCardProps {
-  user: User;
+  user: UserDisplay;
+  userId: string;
 }
 
-export default function UserDetailsCard({ user: initialUser }: UserDetailsCardProps) {
-  const [status, setStatus] = useState<User["status"]>(initialUser.status);
+export default function UserDetailsCard({ user: initialUser, userId }: UserDetailsCardProps) {
+  const [status, setStatus] = useState<UserDisplay["status"]>(initialUser.status);
+  const statusMutation = useAdminUserStatusMutation();
 
-  const handleActivate = () => setStatus("active");
-  const handleDeactivate = () => setStatus("inactive");
+  const handleActivate = () => {
+    statusMutation.mutate(
+      { id: userId, body: { id: userId, is_active: true } },
+      { onSuccess: () => setStatus("active") }
+    );
+  };
+  const handleDeactivate = () => {
+    statusMutation.mutate(
+      { id: userId, body: { id: userId, is_active: false } },
+      { onSuccess: () => setStatus("inactive") }
+    );
+  };
 
   return (
     <div className="space-y-6">
@@ -70,9 +83,10 @@ export default function UserDetailsCard({ user: initialUser }: UserDetailsCardPr
                   <Button
                     size="sm"
                     onClick={handleActivate}
+                    disabled={statusMutation.isPending}
                     className="!bg-success-500 hover:!bg-success-600"
                   >
-                    Activate user
+                    {statusMutation.isPending ? "Updating…" : "Activate user"}
                   </Button>
                 )}
                 {status === "active" && (
@@ -80,9 +94,10 @@ export default function UserDetailsCard({ user: initialUser }: UserDetailsCardPr
                     size="sm"
                     variant="outline"
                     onClick={handleDeactivate}
+                    disabled={statusMutation.isPending}
                     className="!ring-klusta-error/50 hover:!bg-klusta-error-10 hover:!text-klusta-error hover:!ring-klusta-error/30"
                   >
-                    Deactivate user
+                    {statusMutation.isPending ? "Updating…" : "Deactivate user"}
                   </Button>
                 )}
               </div>

@@ -12,33 +12,46 @@ import { Modal } from "@/components/ui/modal";
 import Button from "@/components/ui/button/Button";
 import Label from "@/components/form/Label";
 import Input from "@/components/form/input/InputField";
-import { mockAmenities } from "@/data/mock";
-import type { Amenity } from "@/data/mock";
 import { PlusIcon, PencilIcon, TrashBinIcon } from "@/icons";
+import {
+  useAmenitiesList,
+  useCreateAmenity,
+  useUpdateAmenity,
+  useDeleteAmenity,
+} from "@/lib/api/hooks";
+import { mapApiAmenityToDisplay, type AmenityDisplay } from "@/lib/api/types";
 
-function newId() {
-  return Date.now().toString(36) + Math.random().toString(36).slice(2);
-}
+const PAGE_SIZE = 50;
 
 export default function AmenitiesManager() {
-  const [items, setItems] = useState<Amenity[]>(mockAmenities);
   const [modalOpen, setModalOpen] = useState(false);
-  const [editing, setEditing] = useState<Amenity | null>(null);
+  const [editing, setEditing] = useState<AmenityDisplay | null>(null);
   const [formName, setFormName] = useState("");
-  const [formDescription, setFormDescription] = useState("");
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
+
+  const { data, isLoading, isError, error } = useAmenitiesList({
+    page_id: 1,
+    page_size: PAGE_SIZE,
+  });
+  const createMutation = useCreateAmenity();
+  const updateMutation = useUpdateAmenity();
+  const deleteMutation = useDeleteAmenity();
+
+  const raw = data?.data as { amenities?: unknown[] } | unknown[] | undefined;
+  const list = Array.isArray(raw) ? raw : raw?.amenities ?? [];
+  const items: AmenityDisplay[] = list.map((a) =>
+    mapApiAmenityToDisplay(a as { id: string; amenity?: string; amenities?: string; created_at?: string })
+  );
 
   const openCreate = useCallback(() => {
     setEditing(null);
     setFormName("");
-    setFormDescription("");
     setModalOpen(true);
   }, []);
 
-  const openEdit = useCallback((amenity: Amenity) => {
+  const openEdit = useCallback((amenity: AmenityDisplay) => {
     setEditing(amenity);
     setFormName(amenity.name);
-    setFormDescription(amenity.description ?? "");
     setModalOpen(true);
   }, []);
 
@@ -46,37 +59,25 @@ export default function AmenitiesManager() {
     setModalOpen(false);
     setEditing(null);
     setFormName("");
-    setFormDescription("");
   }, []);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!formName.trim()) return;
+    const name = formName.trim();
     if (editing) {
-      setItems((prev) =>
-        prev.map((a) =>
-          a.id === editing.id
-            ? { ...a, name: formName.trim(), description: formDescription.trim() || undefined }
-            : a
-        )
+      updateMutation.mutate(
+        { id: editing.id, body: { id: editing.id, amenities: name } },
+        { onSuccess: closeModal }
       );
     } else {
-      setItems((prev) => [
-        ...prev,
-        {
-          id: newId(),
-          name: formName.trim(),
-          description: formDescription.trim() || undefined,
-          createdAt: new Date().toISOString().slice(0, 10),
-        },
-      ]);
+      createMutation.mutate({ amenity: name }, { onSuccess: closeModal });
     }
-    closeModal();
   };
 
   const handleDelete = (id: string) => {
     if (deleteConfirm === id) {
-      setItems((prev) => prev.filter((a) => a.id !== id));
+      deleteMutation.mutate(id);
       setDeleteConfirm(null);
     } else {
       setDeleteConfirm(id);
@@ -84,10 +85,32 @@ export default function AmenitiesManager() {
     }
   };
 
+  const isBusy = createMutation.isPending || updateMutation.isPending;
+
+  if (isLoading) {
+    return (
+      <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-white/3">
+        <div className="flex items-center justify-center py-16 text-theme-sm text-gray-500 dark:text-gray-400">
+          Loading amenities…
+        </div>
+      </div>
+    );
+  }
+
+  if (isError) {
+    return (
+      <div className="rounded-2xl border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-white/3">
+        <p className="text-theme-sm text-red-600 dark:text-red-400">
+          {error instanceof Error ? error.message : "Failed to load amenities."}
+        </p>
+      </div>
+    );
+  }
+
   return (
     <>
-      <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-white/[0.03]">
-        <div className="flex items-center justify-between border-b border-gray-100 px-5 py-4 dark:border-white/[0.05]">
+      <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-white/3">
+        <div className="flex items-center justify-between border-b border-gray-100 px-5 py-4 dark:border-white/5">
           <h3 className="text-base font-medium text-gray-800 dark:text-white/90">
             All amenities
           </h3>
@@ -97,29 +120,20 @@ export default function AmenitiesManager() {
         </div>
         <div className="max-w-full overflow-x-auto">
           <Table>
-            <TableHeader className="border-b border-gray-100 dark:border-white/[0.05]">
+            <TableHeader className="border-b border-gray-100 dark:border-white/5">
               <TableRow>
-                <TableCell
-                  isHeader
-                  className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400"
-                >
+                <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">
                   Name
                 </TableCell>
-                <TableCell
-                  isHeader
-                  className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400"
-                >
+                <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">
                   Description
                 </TableCell>
-                <TableCell
-                  isHeader
-                  className="px-5 py-3 font-medium text-gray-500 text-end text-theme-xs dark:text-gray-400"
-                >
+                <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-end text-theme-xs dark:text-gray-400">
                   Actions
                 </TableCell>
               </TableRow>
             </TableHeader>
-            <TableBody className="divide-y divide-gray-100 dark:divide-white/[0.05]">
+            <TableBody className="divide-y divide-gray-100 dark:divide-white/5">
               {items.map((amenity) => (
                 <TableRow key={amenity.id}>
                   <TableCell className="px-5 py-4 font-medium text-gray-800 text-theme-sm dark:text-white/90">
@@ -141,6 +155,7 @@ export default function AmenitiesManager() {
                       <button
                         type="button"
                         onClick={() => handleDelete(amenity.id)}
+                        disabled={deleteMutation.isPending}
                         className={`rounded-lg p-2 transition-colors ${
                           deleteConfirm === amenity.id
                             ? "bg-klusta-error-10 text-klusta-error dark:bg-klusta-error/20"
@@ -151,9 +166,7 @@ export default function AmenitiesManager() {
                         <TrashBinIcon className="size-4" />
                       </button>
                       {deleteConfirm === amenity.id && (
-                        <span className="text-theme-xs text-klusta-error">
-                          Click again to delete
-                        </span>
+                        <span className="text-theme-xs text-klusta-error">Click again to delete</span>
                       )}
                     </div>
                   </TableCell>
@@ -169,41 +182,26 @@ export default function AmenitiesManager() {
         )}
       </div>
 
-      <Modal
-        isOpen={modalOpen}
-        onClose={closeModal}
-        className="max-w-[500px] p-6 lg:p-8"
-      >
+      <Modal isOpen={modalOpen} onClose={closeModal} className="max-w-[500px] p-6 lg:p-8">
         <form onSubmit={handleSubmit}>
           <h4 className="mb-6 text-lg font-medium text-gray-800 dark:text-white/90">
             {editing ? "Edit amenity" : "Add amenity"}
           </h4>
-          <div className="space-y-5">
-            <div>
-              <Label>Name</Label>
-              <Input
-                type="text"
-                placeholder="e.g. WiFi"
-                value={formName}
-                onChange={(e) => setFormName(e.target.value)}
-              />
-            </div>
-            <div>
-              <Label>Description (optional)</Label>
-              <Input
-                type="text"
-                placeholder="Short description"
-                value={formDescription}
-                onChange={(e) => setFormDescription(e.target.value)}
-              />
-            </div>
+          <div>
+            <Label>Name</Label>
+            <Input
+              type="text"
+              placeholder="e.g. WiFi"
+              value={formName}
+              onChange={(e) => setFormName(e.target.value)}
+            />
           </div>
           <div className="mt-6 flex justify-end gap-3">
             <Button type="button" variant="outline" size="sm" onClick={closeModal}>
               Cancel
             </Button>
-            <Button type="submit" size="sm">
-              {editing ? "Save changes" : "Create"}
+            <Button type="submit" size="sm" disabled={isBusy}>
+              {editing ? (updateMutation.isPending ? "Saving…" : "Save changes") : createMutation.isPending ? "Creating…" : "Create"}
             </Button>
           </div>
         </form>

@@ -1,14 +1,17 @@
 import { api } from "../client";
 import type { SuccessResponse } from "../types";
-import type { CategoryListParams, CategoryReq, UpdateCategoryReq } from "../types";
+import type { CategoryListItem, CategoryListParams, CategoryReq, UpdateCategoryReq } from "../types";
 
 export async function getCategoryList(params: CategoryListParams) {
-  const { data } = await api.get<SuccessResponse>("/category/category-list", { params });
+  const { data } = await api.get<SuccessResponse<{ categories?: CategoryListItem[]; total?: number }>>(
+    "/category/category-list",
+    { params }
+  );
   return data;
 }
 
 export async function getCategory(id: string) {
-  const { data } = await api.get<SuccessResponse>(`/category/get-category/${id}`);
+  const { data } = await api.get<SuccessResponse<CategoryListItem>>(`/category/get-category/${id}`);
   return data;
 }
 

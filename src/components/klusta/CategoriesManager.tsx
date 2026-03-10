@@ -12,13 +12,16 @@ import { Modal } from "@/components/ui/modal";
 import Button from "@/components/ui/button/Button";
 import Label from "@/components/form/Label";
 import Input from "@/components/form/input/InputField";
-import { mockCategories } from "@/data/mock";
-import type { Category } from "@/data/mock";
 import { PlusIcon, PencilIcon, TrashBinIcon } from "@/icons";
+import {
+  useCategoryList,
+  useCreateCategory,
+  useUpdateCategory,
+  useDeleteCategory,
+} from "@/lib/api/hooks";
+import { mapApiCategoryToDisplay, type CategoryDisplay } from "@/lib/api/types";
 
-function newId() {
-  return Date.now().toString(36) + Math.random().toString(36).slice(2);
-}
+const PAGE_SIZE = 50;
 
 function slugify(text: string) {
   return text
@@ -29,27 +32,37 @@ function slugify(text: string) {
 }
 
 export default function CategoriesManager() {
-  const [items, setItems] = useState<Category[]>(mockCategories);
   const [modalOpen, setModalOpen] = useState(false);
-  const [editing, setEditing] = useState<Category | null>(null);
+  const [editing, setEditing] = useState<CategoryDisplay | null>(null);
   const [formName, setFormName] = useState("");
   const [formSlug, setFormSlug] = useState("");
-  const [formDescription, setFormDescription] = useState("");
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
+
+  const { data, isLoading, isError, error } = useCategoryList({
+    page_id: 1,
+    page_size: PAGE_SIZE,
+  });
+  const createMutation = useCreateCategory();
+  const updateMutation = useUpdateCategory();
+  const deleteMutation = useDeleteCategory();
+
+  const raw = data?.data as { categories?: unknown[]; total?: number } | unknown[] | undefined;
+  const list = Array.isArray(raw) ? raw : raw?.categories ?? [];
+  const items: CategoryDisplay[] = list.map((c) =>
+    mapApiCategoryToDisplay(c as { id: string; category: string; slug?: string; created_at?: string })
+  );
 
   const openCreate = useCallback(() => {
     setEditing(null);
     setFormName("");
     setFormSlug("");
-    setFormDescription("");
     setModalOpen(true);
   }, []);
 
-  const openEdit = useCallback((category: Category) => {
+  const openEdit = useCallback((category: CategoryDisplay) => {
     setEditing(category);
     setFormName(category.name);
     setFormSlug(category.slug);
-    setFormDescription(category.description ?? "");
     setModalOpen(true);
   }, []);
 
@@ -58,7 +71,6 @@ export default function CategoriesManager() {
     setEditing(null);
     setFormName("");
     setFormSlug("");
-    setFormDescription("");
   }, []);
 
   const handleNameChange = (name: string) => {
@@ -69,38 +81,26 @@ export default function CategoriesManager() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!formName.trim()) return;
-    const slug = formSlug.trim() || slugify(formName);
+    const categoryName = formName.trim();
     if (editing) {
-      setItems((prev) =>
-        prev.map((c) =>
-          c.id === editing.id
-            ? {
-                ...c,
-                name: formName.trim(),
-                slug,
-                description: formDescription.trim() || undefined,
-              }
-            : c
-        )
+      updateMutation.mutate(
+        {
+          id: editing.id,
+          body: { id: editing.id, category: categoryName },
+        },
+        { onSuccess: closeModal }
       );
     } else {
-      setItems((prev) => [
-        ...prev,
-        {
-          id: newId(),
-          name: formName.trim(),
-          slug,
-          description: formDescription.trim() || undefined,
-          createdAt: new Date().toISOString().slice(0, 10),
-        },
-      ]);
+      createMutation.mutate(
+        { category: categoryName },
+        { onSuccess: closeModal }
+      );
     }
-    closeModal();
   };
 
   const handleDelete = (id: string) => {
     if (deleteConfirm === id) {
-      setItems((prev) => prev.filter((c) => c.id !== id));
+      deleteMutation.mutate(id);
       setDeleteConfirm(null);
     } else {
       setDeleteConfirm(id);
@@ -108,10 +108,32 @@ export default function CategoriesManager() {
     }
   };
 
+  const isBusy = createMutation.isPending || updateMutation.isPending;
+
+  if (isLoading) {
+    return (
+      <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-white/3">
+        <div className="flex items-center justify-center py-16 text-theme-sm text-gray-500 dark:text-gray-400">
+          Loading categories…
+        </div>
+      </div>
+    );
+  }
+
+  if (isError) {
+    return (
+      <div className="rounded-2xl border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-white/3">
+        <p className="text-theme-sm text-red-600 dark:text-red-400">
+          {error instanceof Error ? error.message : "Failed to load categories."}
+        </p>
+      </div>
+    );
+  }
+
   return (
     <>
-      <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-white/[0.03]">
-        <div className="flex items-center justify-between border-b border-gray-100 px-5 py-4 dark:border-white/[0.05]">
+      <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-white/3">
+        <div className="flex items-center justify-between border-b border-gray-100 px-5 py-4 dark:border-white/5">
           <h3 className="text-base font-medium text-gray-800 dark:text-white/90">
             All categories
           </h3>
@@ -121,7 +143,7 @@ export default function CategoriesManager() {
         </div>
         <div className="max-w-full overflow-x-auto">
           <Table>
-            <TableHeader className="border-b border-gray-100 dark:border-white/[0.05]">
+            <TableHeader className="border-b border-gray-100 dark:border-white/5">
               <TableRow>
                 <TableCell
                   isHeader
@@ -149,13 +171,13 @@ export default function CategoriesManager() {
                 </TableCell>
               </TableRow>
             </TableHeader>
-            <TableBody className="divide-y divide-gray-100 dark:divide-white/[0.05]">
+            <TableBody className="divide-y divide-gray-100 dark:divide-white/5">
               {items.map((category) => (
                 <TableRow key={category.id}>
                   <TableCell className="px-5 py-4 font-medium text-gray-800 text-theme-sm dark:text-white/90">
                     {category.name}
                   </TableCell>
-                  <TableCell className="px-5 py-4 text-gray-500 text-theme-sm dark:text-gray-400 font-mono text-theme-xs">
+                  <TableCell className="px-5 py-4 font-mono text-theme-xs text-gray-500 dark:text-gray-400">
                     {category.slug}
                   </TableCell>
                   <TableCell className="px-5 py-4 text-gray-500 text-theme-sm dark:text-gray-400">
@@ -174,6 +196,7 @@ export default function CategoriesManager() {
                       <button
                         type="button"
                         onClick={() => handleDelete(category.id)}
+                        disabled={deleteMutation.isPending}
                         className={`rounded-lg p-2 transition-colors ${
                           deleteConfirm === category.id
                             ? "bg-klusta-error-10 text-klusta-error dark:bg-klusta-error/20"
@@ -230,22 +253,13 @@ export default function CategoriesManager() {
                 onChange={(e) => setFormSlug(e.target.value)}
               />
             </div>
-            <div>
-              <Label>Description (optional)</Label>
-              <Input
-                type="text"
-                placeholder="Short description"
-                value={formDescription}
-                onChange={(e) => setFormDescription(e.target.value)}
-              />
-            </div>
           </div>
           <div className="mt-6 flex justify-end gap-3">
             <Button type="button" variant="outline" size="sm" onClick={closeModal}>
               Cancel
             </Button>
-            <Button type="submit" size="sm">
-              {editing ? "Save changes" : "Create"}
+            <Button type="submit" size="sm" disabled={isBusy}>
+              {editing ? (updateMutation.isPending ? "Saving…" : "Save changes") : createMutation.isPending ? "Creating…" : "Create"}
             </Button>
           </div>
         </form>

@@ -2,9 +2,25 @@
 
 import React, { useState } from "react";
 import Badge from "@/components/ui/badge/Badge";
-import { mockSupportTickets } from "@/data/mock";
-import type { SupportTicket, SupportTicketStatus } from "@/data/mock";
 import { MailIcon } from "@/icons";
+
+export type SupportTicketStatus = "open" | "pending" | "resolved" | "closed";
+export type SupportPriority = "low" | "medium" | "high";
+
+export interface SupportTicket {
+  id: string;
+  userId: string;
+  userName: string;
+  userEmail: string;
+  subject: string;
+  message: string;
+  status: SupportTicketStatus;
+  priority: SupportPriority;
+  createdAt: string;
+  updatedAt: string;
+}
+
+const TICKETS: SupportTicket[] = [];
 
 const statusColor: Record<SupportTicketStatus, "success" | "warning" | "error" | "info"> = {
   open: "error",
@@ -13,7 +29,7 @@ const statusColor: Record<SupportTicketStatus, "success" | "warning" | "error" |
   closed: "info",
 };
 
-const priorityColor: Record<SupportTicket["priority"], "success" | "warning" | "error"> = {
+const priorityColor: Record<SupportPriority, "success" | "warning" | "error"> = {
   low: "success",
   medium: "warning",
   high: "error",
@@ -22,9 +38,8 @@ const priorityColor: Record<SupportTicket["priority"], "success" | "warning" | "
 export default function CustomerSupportList() {
   const [statusFilter, setStatusFilter] = useState<SupportTicketStatus | "all">("all");
 
-  const filtered = statusFilter === "all"
-    ? mockSupportTickets
-    : mockSupportTickets.filter((t) => t.status === statusFilter);
+  const filtered =
+    statusFilter === "all" ? TICKETS : TICKETS.filter((t) => t.status === statusFilter);
 
   return (
     <div className="space-y-6">

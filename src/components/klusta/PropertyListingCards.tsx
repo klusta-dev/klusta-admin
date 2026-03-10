@@ -1,13 +1,13 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
+import React, { useMemo, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import Badge from "@/components/ui/badge/Badge";
-import { mockProperties } from "@/data/mock";
-import type { Property } from "@/data/mock";
 import { ListIcon, TableIcon } from "@/icons";
 import PropertiesTable from "@/components/klusta/PropertiesTable";
+import { usePropertyList } from "@/lib/api/hooks";
+import { mapApiPropertyToDisplay, type PropertyDisplay } from "@/lib/api/types";
 
 const statusColor: Record<string, "success" | "warning" | "error"> = {
   listed: "success",
@@ -56,37 +56,59 @@ export default function PropertyListingCards() {
   const [location, setLocation] = useState("All locations");
   const [filter, setFilter] = useState<"all" | "listed" | "pending" | "unlisted">("all");
 
+  const { data, isLoading, isError, error } = usePropertyList({
+    page_size: 100,
+    search: search.trim() || undefined,
+  });
+
+  const raw = data?.data as { properties?: unknown[] } | unknown[] | undefined;
+  const list = Array.isArray(raw) ? raw : raw?.properties ?? [];
+  const allItems: PropertyDisplay[] = list.map((p) =>
+    mapApiPropertyToDisplay(p as Parameters<typeof mapApiPropertyToDisplay>[0])
+  );
+
   const filtered = useMemo(() => {
-    let list = mockProperties;
-    if (search.trim()) {
-      const q = search.toLowerCase();
-      list = list.filter(
-        (p) =>
-          p.title.toLowerCase().includes(q) ||
-          p.city.toLowerCase().includes(q) ||
-          p.categoryName.toLowerCase().includes(q)
-      );
-    }
-    if (location !== "All locations")
-      list = list.filter((p) => p.city === location);
-    if (filter !== "all")
-      list = list.filter((p) => p.status === filter);
-    return list;
-  }, [search, location, filter]);
+    let result = allItems;
+    if (location !== "All locations") result = result.filter((p) => p.city === location);
+    if (filter !== "all") result = result.filter((p) => p.status === filter);
+    return result;
+  }, [allItems, location, filter]);
+
+  if (isLoading) {
+    return (
+      <div className="space-y-8">
+        <div>
+          <h1 className="text-2xl font-bold text-typography dark:text-white/90 md:text-3xl">Welcome to Klusta</h1>
+          <p className="mt-1 text-theme-sm text-gray-500 dark:text-gray-400">Book your accommodations and sail smoothly.</p>
+        </div>
+        <div className="flex items-center justify-center py-16 text-theme-sm text-gray-500 dark:text-gray-400">
+          Loading properties…
+        </div>
+      </div>
+    );
+  }
+
+  if (isError) {
+    return (
+      <div className="space-y-8">
+        <div>
+          <h1 className="text-2xl font-bold text-typography dark:text-white/90 md:text-3xl">Welcome to Klusta</h1>
+          <p className="mt-1 text-theme-sm text-gray-500 dark:text-gray-400">Book your accommodations and sail smoothly.</p>
+        </div>
+        <p className="text-theme-sm text-red-600 dark:text-red-400">
+          {error instanceof Error ? error.message : "Failed to load properties."}
+        </p>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-8">
-      {/* Welcome */}
       <div>
-        <h1 className="text-2xl font-bold text-typography dark:text-white/90 md:text-3xl">
-          Welcome to Klusta
-        </h1>
-        <p className="mt-1 text-theme-sm text-gray-500 dark:text-gray-400">
-          Book your accommodations and sail smoothly.
-        </p>
+        <h1 className="text-2xl font-bold text-typography dark:text-white/90 md:text-3xl">Welcome to Klusta</h1>
+        <p className="mt-1 text-theme-sm text-gray-500 dark:text-gray-400">Book your accommodations and sail smoothly.</p>
       </div>
 
-      {/* Search + location + view toggle */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
         <div className="relative flex-1">
           <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2">
@@ -114,9 +136,7 @@ export default function PropertyListingCards() {
             className="h-12 rounded-xl border border-gray-200 bg-white px-4 text-theme-sm text-typography focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90"
           >
             {CITIES.map((c) => (
-              <option key={c} value={c === "All locations" ? "All locations" : c}>
-                {c}
-              </option>
+              <option key={c} value={c}>{c}</option>
             ))}
           </select>
           <div className="hidden rounded-lg border border-gray-200 bg-gray-50 p-1 dark:border-gray-700 dark:bg-gray-800 sm:flex">
@@ -144,7 +164,6 @@ export default function PropertyListingCards() {
         </div>
       </div>
 
-      {/* Filter chips */}
       <div className="flex flex-wrap gap-2">
         {FILTER_CHIPS.map((chip) => (
           <button
@@ -163,7 +182,7 @@ export default function PropertyListingCards() {
       </div>
 
       {viewMode === "table" ? (
-        <PropertiesTable />
+        <PropertiesTable properties={filtered} />
       ) : (
         <section>
           <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
@@ -182,7 +201,7 @@ export default function PropertyListingCards() {
   );
 }
 
-function PropertyLargeCard({ property }: { property: Property }) {
+function PropertyLargeCard({ property }: { property: PropertyDisplay }) {
   const imgSrc = property.images?.[0] ?? property.image;
   return (
     <Link
@@ -191,13 +210,7 @@ function PropertyLargeCard({ property }: { property: Property }) {
     >
       <div className="relative aspect-[4/3] bg-gray-200 dark:bg-gray-700">
         {imgSrc ? (
-          <Image
-            src={imgSrc}
-            alt={property.title}
-            fill
-            className="object-cover"
-            sizes="340px"
-          />
+          <Image src={imgSrc} alt={property.title} fill className="object-cover" sizes="340px" />
         ) : (
           <div className="flex h-full w-full items-center justify-center text-4xl text-gray-400">—</div>
         )}
@@ -213,9 +226,7 @@ function PropertyLargeCard({ property }: { property: Property }) {
         </div>
       </div>
       <div className="flex flex-1 flex-col p-4">
-        <h3 className="line-clamp-2 font-semibold text-typography dark:text-white/90">
-          {property.title}
-        </h3>
+        <h3 className="line-clamp-2 font-semibold text-typography dark:text-white/90">{property.title}</h3>
         <p className="mt-1.5 flex items-center gap-1.5 text-theme-sm text-gray-500 dark:text-gray-400">
           <LocationPin />
           {property.city}
@@ -227,9 +238,7 @@ function PropertyLargeCard({ property }: { property: Property }) {
             {property.rating ?? "—"} ({(property.reviewCount ?? 0) >= 1000 ? `${((property.reviewCount ?? 0) / 1000).toFixed(1)}k` : property.reviewCount} reviews)
           </p>
         )}
-        <p className="mt-2 font-semibold text-primary text-theme-sm dark:text-primary-50">
-          {property.price}
-        </p>
+        <p className="mt-2 font-semibold text-primary text-theme-sm dark:text-primary-50">{property.price}</p>
       </div>
     </Link>
   );

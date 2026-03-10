@@ -71,6 +71,7 @@ export default function PropertiesTable({ properties }: PropertiesTableProps) {
           </TableHeader>
           <TableBody className="divide-y divide-gray-100 dark:divide-white/5">
             {properties.map((property) => (
+            {properties.map((property) => (
               <TableRow key={property.id}>
                 <TableCell className="px-5 py-4 text-start">
                   <div className="flex items-center gap-3">
@@ -108,7 +109,7 @@ export default function PropertiesTable({ properties }: PropertiesTableProps) {
                   {property.categoryName}
                 </TableCell>
                 <TableCell className="px-5 py-4 font-medium text-typography text-theme-sm dark:text-white/90">
-                  {property.price}
+                  {formatAmount(property.price)}
                 </TableCell>
                 <TableCell className="px-5 py-4">
                   <Badge size="sm" color={statusColor[property.status] ?? "success"}>
@@ -126,6 +127,13 @@ export default function PropertiesTable({ properties }: PropertiesTableProps) {
                 </TableCell>
               </TableRow>
             ))}
+            {properties.length === 0 && (
+              <TableRow>
+                <TableCell colSpan={6} className="px-5 py-8 text-center text-gray-500 dark:text-gray-400">
+                  No properties found.
+                </TableCell>
+              </TableRow>
+            )}
           </TableBody>
         </Table>
       </div>

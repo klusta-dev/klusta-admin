@@ -11,12 +11,12 @@ export function usePropertyList(params: { page_size: number; page_id?: number; s
   });
 }
 
-export function usePropertyOwnerList(params: { page_size: number; page_id?: number; status?: string }) {
-  return useQuery({
-    queryKey: propertyKeys.ownerList(params),
-    queryFn: () => propertyApi.getPropertyOwnerList(params),
-  });
-}
+// export function usePropertyOwnerList(params: { page_size: number; page_id?: number; status?: string }) {
+//   return useQuery({
+//     queryKey: propertyKeys.ownerList(params),
+//     queryFn: () => propertyApi.getPropertyOwnerList(params),
+//   });
+// }
 
 export function useProperty(id: string | null) {
   return useQuery({

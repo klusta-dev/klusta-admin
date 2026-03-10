@@ -1,8 +1,14 @@
 "use client";
 
-import React, { createContext, useCallback, useContext, useEffect, useState } from "react";
+import React, { createContext, useCallback, useContext, useState } from "react";
 import { authApi } from "@/lib/api";
-import { setAuthTokens, clearAuthTokens, AUTH_ACCESS_KEY } from "@/lib/api/client";
+import {
+  setAuthTokens,
+  clearAuthTokens,
+  AUTH_ACCESS_KEY,
+  extractAuthTokens,
+  initializeAuthHeaderFromStorage,
+} from "@/lib/api/client";
 
 type AuthContextValue = {
   isAuthenticated: boolean;
@@ -13,24 +19,23 @@ type AuthContextValue = {
 
 const AuthContext = createContext<AuthContextValue | null>(null);
 
-export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
+if (typeof window !== "undefined") {
+  initializeAuthHeaderFromStorage();
+}
 
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    const token = localStorage.getItem(AUTH_ACCESS_KEY);
-    setIsAuthenticated(!!token);
-    setIsLoading(false);
-  }, []);
+export function AuthProvider({ children }: { children: React.ReactNode }) {
+  const [isAuthenticated, setIsAuthenticated] = useState(
+    () => typeof window !== "undefined" && !!localStorage.getItem(AUTH_ACCESS_KEY)
+  );
+  const [isLoading] = useState(false);
 
   const login = useCallback(async (email: string, password: string) => {
     if (!email.trim() || !password.trim()) return false;
     try {
       const res = await authApi.login({ email: email.trim(), password });
-      const d = res?.data as { access_token?: string; refresh_token?: string };
-      if (d?.access_token && d?.refresh_token) {
-        setAuthTokens(d.access_token, d.refresh_token);
+      const tokens = extractAuthTokens(res);
+      if (tokens?.access) {
+        setAuthTokens(tokens.access, tokens.refresh);
         setIsAuthenticated(true);
         return true;
       }

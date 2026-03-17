@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useCallback, useState } from "react";
 import {
   Table,
   TableBody,
@@ -57,16 +57,16 @@ export default function CategoriesManager() {
     setFormName("");
     setFormSlug("");
     setModalOpen(true);
-  };
+  }, []);
 
   const openEdit = useCallback((category: CategoryDisplay) => {
     setEditing(category);
     setFormName(category.name);
     setFormSlug(category.slug);
     setModalOpen(true);
-  };
+  }, []);
 
-  const closeModal = () => {
+  const closeModal = useCallback(() => {
     setModalOpen(false);
     setEditing(null);
     setFormName("");
@@ -81,7 +81,6 @@ export default function CategoriesManager() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formName.trim()) return;
-    const categoryName = formName.trim();
     const categoryName = formName.trim();
     if (editing) {
       updateMutation.mutate(
@@ -198,11 +197,10 @@ export default function CategoriesManager() {
                         type="button"
                         onClick={() => handleDelete(category.id)}
                         disabled={deleteMutation.isPending}
-                        className={`rounded-lg p-2 transition-colors ${
-                          deleteConfirm === category.id
+                        className={`rounded-lg p-2 transition-colors ${deleteConfirm === category.id
                             ? "bg-klusta-error-10 text-klusta-error dark:bg-klusta-error/20"
                             : "text-gray-500 hover:bg-klusta-error-10 hover:text-klusta-error dark:hover:bg-klusta-error/20"
-                        }`}
+                          }`}
                         aria-label="Delete"
                       >
                         <TrashBinIcon className="size-4" />

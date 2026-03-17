@@ -51,16 +51,17 @@ const FILTER_CHIPS = [
 ] as const;
 
 export default function PropertyListingCards() {
-  const { data, isLoading } = usePropertyList({ page_size: 10, page_id: 1 });
+  const { data, isLoading, isError, error } = usePropertyList({ page_size: 50, page_id: 1 });
   const [viewMode, setViewMode] = useState<"listings" | "table">("listings");
   const [search, setSearch] = useState("");
   const [location, setLocation] = useState("All locations");
   const [filter, setFilter] = useState<"all" | "listed" | "pending" | "unlisted">("all");
 
-  const { data, isLoading, isError, error } = usePropertyList({
-    page_size: 100,
-    search: search.trim() || undefined,
-  });
+  // const { data, isLoading, isError, error } = usePropertyList({
+  //   page_size: 10,
+  //   page_id: 1,
+  //   search: search.trim() || undefined,
+  // });
 
   const raw = data?.data as { properties?: unknown[] } | unknown[] | undefined;
   const list = Array.isArray(raw) ? raw : raw?.properties ?? [];
@@ -144,9 +145,8 @@ export default function PropertyListingCards() {
             <button
               type="button"
               onClick={() => setViewMode("listings")}
-              className={`flex items-center gap-2 rounded-md px-3 py-2 text-theme-sm font-medium transition-colors ${
-                viewMode === "listings" ? "bg-white text-primary shadow-theme-xs dark:bg-gray-900 dark:text-primary-50" : "text-gray-600 dark:text-gray-400"
-              }`}
+              className={`flex items-center gap-2 rounded-md px-3 py-2 text-theme-sm font-medium transition-colors ${viewMode === "listings" ? "bg-white text-primary shadow-theme-xs dark:bg-gray-900 dark:text-primary-50" : "text-gray-600 dark:text-gray-400"
+                }`}
             >
               <ListIcon className="size-4" />
               Listings
@@ -154,9 +154,8 @@ export default function PropertyListingCards() {
             <button
               type="button"
               onClick={() => setViewMode("table")}
-              className={`flex items-center gap-2 rounded-md px-3 py-2 text-theme-sm font-medium transition-colors ${
-                viewMode === "table" ? "bg-white text-primary shadow-theme-xs dark:bg-gray-900 dark:text-primary-50" : "text-gray-600 dark:text-gray-400"
-              }`}
+              className={`flex items-center gap-2 rounded-md px-3 py-2 text-theme-sm font-medium transition-colors ${viewMode === "table" ? "bg-white text-primary shadow-theme-xs dark:bg-gray-900 dark:text-primary-50" : "text-gray-600 dark:text-gray-400"
+                }`}
             >
               <TableIcon className="size-4" />
               Table
@@ -171,11 +170,10 @@ export default function PropertyListingCards() {
             key={chip.id}
             type="button"
             onClick={() => setFilter(chip.id)}
-            className={`rounded-lg border px-4 py-2.5 text-theme-sm font-medium transition-colors ${
-              filter === chip.id
-                ? "border-primary bg-primary text-white dark:bg-primary dark:text-white"
-                : "border-primary bg-transparent text-primary hover:bg-primary-10 dark:text-primary-50 dark:hover:bg-primary/20"
-            }`}
+            className={`rounded-lg border px-4 py-2.5 text-theme-sm font-medium transition-colors ${filter === chip.id
+              ? "border-primary bg-primary text-white dark:bg-primary dark:text-white"
+              : "border-primary bg-transparent text-primary hover:bg-primary-10 dark:text-primary-50 dark:hover:bg-primary/20"
+              }`}
           >
             {chip.label}
           </button>
@@ -183,7 +181,6 @@ export default function PropertyListingCards() {
       </div>
 
       {viewMode === "table" ? (
-        <PropertiesTable properties={filtered} />
         <PropertiesTable properties={filtered} />
       ) : (
         <section>

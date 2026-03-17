@@ -37,7 +37,7 @@ export default function UsersTable() {
 
   if (isLoading) {
     return (
-      <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-white/[0.03]">
+      <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-white/3">
         <div className="flex items-center justify-center py-16 text-theme-sm text-gray-500 dark:text-gray-400">
           Loading users…
         </div>
@@ -47,7 +47,7 @@ export default function UsersTable() {
 
   if (isError) {
     return (
-      <div className="rounded-2xl border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-white/3">
+      <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-white/3">
         <p className="text-theme-sm text-red-600 dark:text-red-400">
           {error instanceof Error ? error.message : "Failed to load users."}
         </p>
@@ -57,10 +57,10 @@ export default function UsersTable() {
 
   return (
     <div className="space-y-4">
-      <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-white/[0.03]">
+      <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-white/3">
         <div className="max-w-full overflow-x-auto">
           <Table>
-            <TableHeader className="border-b border-gray-100 dark:border-white/[0.05]">
+            <TableHeader className="border-b border-gray-100 dark:border-white/5">
               <TableRow>
                 <TableCell
                   isHeader
@@ -94,7 +94,7 @@ export default function UsersTable() {
                 </TableCell>
               </TableRow>
             </TableHeader>
-            <TableBody className="divide-y divide-gray-100 dark:divide-white/[0.05]">
+            <TableBody className="divide-y divide-gray-100 dark:divide-white/5">
               {displayUsers.length === 0 ? (
                 <TableRow>
                   <TableCell className="px-5 py-12 text-center text-theme-sm text-gray-500 dark:text-gray-400">

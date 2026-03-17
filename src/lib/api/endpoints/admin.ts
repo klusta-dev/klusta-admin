@@ -8,7 +8,7 @@ export async function getAdminStats() {
 }
 
 export async function getAdminUsers(params: AdminUsersParams) {
-  const { data } = await api.get<SuccessResponse<{ users?: AdminUserListItem[]; total?: number }>>(
+  const { data } = await api.get<SuccessResponse<{ users: AdminUserListItem[]; total: number }>>(
     "/admin/users",
     { params }
   );

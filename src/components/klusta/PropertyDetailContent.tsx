@@ -171,7 +171,7 @@ export default function PropertyDetailContent({ id }: PropertyDetailContentProps
               Guests should remember tips about what is expected of a great guest
             </p>
             <ul className="mt-3 list-disc space-y-1 pl-5 text-theme-sm text-gray-600 dark:text-gray-300">
-              {property.groundRules.map((rule) => (
+              {property?.groundRules?.map((rule) => (
                 <li key={rule}>{rule}</li>
               ))}
             </ul>

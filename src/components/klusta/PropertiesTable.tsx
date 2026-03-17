@@ -13,6 +13,7 @@ import {
 import Badge from "@/components/ui/badge/Badge";
 import { EyeIcon } from "@/icons";
 import type { PropertyDisplay } from "@/lib/api/types";
+import { formatAmount } from "@/lib/format";
 
 const statusColor: Record<string, "success" | "warning" | "error"> = {
   listed: "success",
@@ -70,7 +71,6 @@ export default function PropertiesTable({ properties }: PropertiesTableProps) {
             </TableRow>
           </TableHeader>
           <TableBody className="divide-y divide-gray-100 dark:divide-white/5">
-            {properties.map((property) => (
             {properties.map((property) => (
               <TableRow key={property.id}>
                 <TableCell className="px-5 py-4 text-start">

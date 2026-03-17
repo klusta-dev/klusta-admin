@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useCallback, useState } from "react";
 import {
   Table,
   TableBody,
@@ -47,15 +47,15 @@ export default function AmenitiesManager() {
     setEditing(null);
     setFormName("");
     setModalOpen(true);
-  };
+  }, []);
 
   const openEdit = useCallback((amenity: AmenityDisplay) => {
     setEditing(amenity);
     setFormName(amenity.name);
     setModalOpen(true);
-  };
+  }, []);
 
-  const closeModal = () => {
+  const closeModal = useCallback(() => {
     setModalOpen(false);
     setEditing(null);
     setFormName("");
@@ -156,11 +156,10 @@ export default function AmenitiesManager() {
                         type="button"
                         onClick={() => handleDelete(amenity.id)}
                         disabled={deleteMutation.isPending}
-                        className={`rounded-lg p-2 transition-colors ${
-                          deleteConfirm === amenity.id
+                        className={`rounded-lg p-2 transition-colors ${deleteConfirm === amenity.id
                             ? "bg-klusta-error-10 text-klusta-error dark:bg-klusta-error/20"
                             : "text-gray-500 hover:bg-klusta-error-10 hover:text-klusta-error dark:hover:bg-klusta-error/20"
-                        }`}
+                          }`}
                         aria-label="Delete"
                       >
                         <TrashBinIcon className="size-4" />

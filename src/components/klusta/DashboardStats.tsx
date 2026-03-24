@@ -7,8 +7,8 @@ import { useAdminStats } from "@/lib/api/hooks";
 import { formatNumber } from "@/lib/format";
 
 const statCards = [
-  { key: "users", label: "Total Users", dataKey: "total_users" as const, href: "/users", icon: <GroupIcon className="size-6" />, bgIcon: "bg-primary-10", textIcon: "text-primary" },
-  { key: "active", label: "Active Users", dataKey: "active_users" as const, href: "/users", icon: <UserCircleIcon className="size-6" />, bgIcon: "bg-secondary-10", textIcon: "text-secondary" },
+  { key: "users", label: "Total Regular Users", dataKey: "total_users" as const, href: "/users", icon: <GroupIcon className="size-6" />, bgIcon: "bg-primary-10", textIcon: "text-primary" },
+  { key: "active", label: "Active Regular Users", dataKey: "active_users" as const, href: "/users", icon: <UserCircleIcon className="size-6" />, bgIcon: "bg-secondary-10", textIcon: "text-secondary" },
   { key: "amenities", label: "Amenities", dataKey: "total_amenities" as const, href: "/amenities", icon: <BoxCubeIcon className="size-6" />, bgIcon: "bg-primary-10", textIcon: "text-primary" },
   { key: "properties", label: "Properties", dataKey: "total_properties" as const, href: "/properties", icon: <FolderIcon className="size-6" />, bgIcon: "bg-primary-10", textIcon: "text-primary" },
   { key: "categories", label: "Categories", dataKey: "total_categories" as const, href: "/categories", icon: <ListIcon className="size-6" />, bgIcon: "bg-secondary-10", textIcon: "text-secondary" },

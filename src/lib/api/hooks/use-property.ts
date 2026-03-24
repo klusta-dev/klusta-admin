@@ -19,10 +19,12 @@ export function usePropertyList(params: { page_size: number; page_id?: number; s
 // }
 
 export function useProperty(id: string | null) {
+  const normalizedId = (id ?? "").trim();
+
   return useQuery({
-    queryKey: propertyKeys.detail(id ?? ""),
-    queryFn: () => propertyApi.getProperty(id!),
-    enabled: !!id,
+    queryKey: propertyKeys.detail(normalizedId),
+    queryFn: () => propertyApi.getProperty(normalizedId),
+    enabled: normalizedId.length > 0,
   });
 }
 

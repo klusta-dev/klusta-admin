@@ -16,8 +16,17 @@ export async function getPropertyOwnerList(params: PropertyOwnerListParams) {
 }
 
 export async function getProperty(id: string) {
-  const { data } = await api.get<SuccessResponse<PropertyListItem>>(`/property/get-property/${id}`);
-  return data;
+  const safeId = encodeURIComponent(String(id).trim());
+  try {
+    const { data } = await api.get<SuccessResponse<PropertyListItem>>(`/property/get-property/${safeId}`);
+    return data;
+  } catch (error) {
+    // Some environments expose get-property as query based instead of path based.
+    const { data } = await api.get<SuccessResponse<PropertyListItem>>("/property/get-property", {
+      params: { id: String(id).trim() },
+    });
+    return data;
+  }
 }
 
 export async function updateProperty(id: string, body: Record<string, unknown>) {

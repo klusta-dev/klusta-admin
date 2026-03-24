@@ -11,18 +11,11 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import Badge from "@/components/ui/badge/Badge";
 import { EyeIcon } from "@/icons";
 import { useAdminUsers } from "@/lib/api/hooks";
 import { mapApiUserToDisplay } from "@/lib/api/types";
 
 const PAGE_SIZE = 10;
-const statusColor: Record<string, "success" | "warning" | "error"> = {
-  active: "success",
-  pending: "warning",
-  inactive: "error",
-};
-
 export default function UsersTable() {
   const [page, setPage] = useState(1);
   const offset = page * PAGE_SIZE;
@@ -66,7 +59,7 @@ export default function UsersTable() {
                   isHeader
                   className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400"
                 >
-                  User
+                  Regular User
                 </TableCell>
                 <TableCell
                   isHeader
@@ -78,13 +71,19 @@ export default function UsersTable() {
                   isHeader
                   className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400"
                 >
-                  Role
+                  Active Bookings
                 </TableCell>
                 <TableCell
                   isHeader
                   className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400"
                 >
-                  Status
+                  Total Bookings
+                </TableCell>
+                <TableCell
+                  isHeader
+                  className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400"
+                >
+                  Total Spent
                 </TableCell>
                 <TableCell
                   isHeader
@@ -104,9 +103,19 @@ export default function UsersTable() {
                   <TableCell className="px-5 py-12">{null}</TableCell>
                   <TableCell className="px-5 py-12">{null}</TableCell>
                   <TableCell className="px-5 py-12">{null}</TableCell>
+                  <TableCell className="px-5 py-12">{null}</TableCell>
                 </TableRow>
               ) : (
-                displayUsers.map((user: any) => (
+                displayUsers.map((user: any, index: number) => {
+                  const rawUser = users[index] as Record<string, unknown> | undefined;
+                  const activeBookings =
+                    typeof rawUser?.active_bookings === "number" ? rawUser.active_bookings : 0;
+                  const totalBookings =
+                    typeof rawUser?.total_bookings === "number" ? rawUser.total_bookings : 0;
+                  const totalSpentValue =
+                    typeof rawUser?.total_spent === "number" ? rawUser.total_spent : 0;
+
+                  return (
                   <TableRow key={user.id}>
                     <TableCell className="px-5 py-4 text-start">
                       <div className="flex items-center gap-3">
@@ -140,12 +149,17 @@ export default function UsersTable() {
                       {user.email}
                     </TableCell>
                     <TableCell className="px-5 py-4 text-gray-600 text-theme-sm dark:text-gray-400">
-                      {user.role}
+                      {activeBookings}
                     </TableCell>
                     <TableCell className="px-5 py-4">
-                      <Badge size="sm" color={statusColor[user.status] ?? "success"}>
-                        {user.status}
-                      </Badge>
+                      <span className="text-gray-600 text-theme-sm dark:text-gray-400">
+                        {totalBookings}
+                      </span>
+                    </TableCell>
+                    <TableCell className="px-5 py-4">
+                      <span className="font-medium text-typography text-theme-sm dark:text-white/90">
+                        ₦{totalSpentValue.toLocaleString()}
+                      </span>
                     </TableCell>
                     <TableCell className="px-5 py-4 text-end">
                       <Link
@@ -157,7 +171,8 @@ export default function UsersTable() {
                       </Link>
                     </TableCell>
                   </TableRow>
-                ))
+                  );
+                })
               )}
             </TableBody>
           </Table>

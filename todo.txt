@@ -1,0 +1,4 @@
+add role page, add pending properties page, add cards for transaction stats, add page for home owners ( transactions, last withdrawals, properties)
+change users to reguslar users ( active bookings, total bookings, total spent)
+change recent activites to recent transactions
+transactions page

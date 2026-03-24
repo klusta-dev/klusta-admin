@@ -35,13 +35,33 @@ const navItems: NavItem[] = [
   },
   {
     icon: <UserCircleIcon />,
-    name: "Users",
+    name: "Regular Users",
     path: "/users",
+  },
+  {
+    icon: <UserCircleIcon />,
+    name: "Roles",
+    path: "/roles",
   },
   {
     icon: <FolderIcon />,
     name: "Properties",
     path: "/properties",
+  },
+  {
+    icon: <FolderIcon />,
+    name: "Pending Properties",
+    path: "/pending-properties",
+  },
+  {
+    icon: <ListIcon />,
+    name: "Home Owners",
+    path: "/home-owners",
+  },
+  {
+    icon: <BoxCubeIcon />,
+    name: "Transactions",
+    path: "/transactions",
   },
   {
     icon: <BoxCubeIcon />,

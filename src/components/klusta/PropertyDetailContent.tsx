@@ -39,14 +39,41 @@ export default function PropertyDetailContent({ id }: PropertyDetailContentProps
   const { data, isLoading, isError, error, isFetched } = useProperty(id);
 
   const raw = data?.data;
-  const property: PropertyDisplay | null =
-    raw && typeof raw === "object" && "id" in raw
-      ? mapApiPropertyToDisplay(raw as Parameters<typeof mapApiPropertyToDisplay>[0])
+  const detailItem =
+    raw && typeof raw === "object"
+      ? "property" in raw &&
+        (raw as { property?: Record<string, unknown> }).property &&
+        typeof (raw as { property?: Record<string, unknown> }).property === "object"
+        ? ({
+            ...(raw as { property: Record<string, unknown> }).property,
+            amenities: (raw as { amenities?: unknown }).amenities,
+            images:
+              (raw as { images?: unknown }).images ??
+              (raw as { property: Record<string, unknown> }).property.images,
+            category_name: Array.isArray((raw as { categories?: unknown[] }).categories)
+              ? String((raw as { categories?: unknown[] }).categories?.[0] ?? "")
+              : (raw as { property: Record<string, unknown> }).property.category_name,
+          } as Parameters<typeof mapApiPropertyToDisplay>[0])
+        : ("id" in raw ? (raw as Parameters<typeof mapApiPropertyToDisplay>[0]) : null)
       : null;
+
+  const property: PropertyDisplay | null = detailItem ? mapApiPropertyToDisplay(detailItem) : null;
 
   useEffect(() => {
     if (property?.title) document.title = `${property.title} | Klusta Admin`;
   }, [property?.title]);
+
+  useEffect(() => {
+    if (!isFetched) return;
+    // Temporary debug log to inspect property details endpoint payload.
+    console.log("[PropertyDetails] endpoint response", {
+      id,
+      response: data,
+      mappedProperty: property,
+      isError,
+      error,
+    });
+  }, [id, data, property, isFetched, isError, error]);
 
   if (isLoading || !isFetched) {
     return (
@@ -99,7 +126,7 @@ export default function PropertyDetailContent({ id }: PropertyDetailContentProps
 
       <div className="mx-auto max-w-(--breakpoint-2xl) px-4 py-6 md:px-6">
         <div className="flex gap-2 overflow-hidden rounded-2xl">
-          <div className="relative aspect-[4/3] min-h-[240px] flex-1 bg-gray-200 dark:bg-gray-800">
+          <div className="relative aspect-4/3 min-h-[240px] flex-1 bg-gray-200 dark:bg-gray-800">
             {images[0] ? (
               <Image
                 src={images[0]}
@@ -114,7 +141,7 @@ export default function PropertyDetailContent({ id }: PropertyDetailContentProps
             )}
           </div>
           {images[1] && (
-            <div className="relative hidden aspect-[4/3] w-[280px] shrink-0 bg-gray-200 dark:bg-gray-800 md:block">
+            <div className="relative hidden aspect-4/3 w-[280px] shrink-0 bg-gray-200 dark:bg-gray-800 md:block">
               <Image src={images[1]} alt="" fill className="object-cover" sizes="280px" />
             </div>
           )}

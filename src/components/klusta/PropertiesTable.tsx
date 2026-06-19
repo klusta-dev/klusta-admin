@@ -28,7 +28,7 @@ interface PropertiesTableProps {
 export default function PropertiesTable({ properties }: PropertiesTableProps) {
   return (
     <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-white/3">
-      <div className="max-w-full overflow-x-auto">
+      <div className="max-w-full overflow-x-auto no-scrollbar">
         <Table>
           <TableHeader className="border-b border-gray-100 dark:border-white/5">
             <TableRow>

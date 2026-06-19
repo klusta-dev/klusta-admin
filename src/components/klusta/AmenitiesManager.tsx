@@ -20,6 +20,7 @@ import {
   useDeleteAmenity,
 } from "@/lib/api/hooks";
 import { mapApiAmenityToDisplay, type AmenityDisplay } from "@/lib/api/types";
+import { CatalogManagerSkeleton } from "@/components/ui/skeleton";
 
 const PAGE_SIZE = 50;
 
@@ -87,15 +88,7 @@ export default function AmenitiesManager() {
 
   const isBusy = createMutation.isPending || updateMutation.isPending;
 
-  if (isLoading) {
-    return (
-      <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-white/3">
-        <div className="flex items-center justify-center py-16 text-theme-sm text-gray-500 dark:text-gray-400">
-          Loading amenities…
-        </div>
-      </div>
-    );
-  }
+  if (isLoading) return <CatalogManagerSkeleton />;
 
   if (isError) {
     return (
@@ -118,7 +111,7 @@ export default function AmenitiesManager() {
             Add amenity
           </Button>
         </div>
-        <div className="max-w-full overflow-x-auto">
+        <div className="max-w-full overflow-x-auto no-scrollbar">
           <Table>
             <TableHeader className="border-b border-gray-100 dark:border-white/5">
               <TableRow>

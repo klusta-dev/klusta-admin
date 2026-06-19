@@ -8,6 +8,7 @@ import { mapApiPropertyToDisplay, type PropertyDisplay } from "@/lib/api/types";
 import { ChevronLeftIcon } from "@/icons";
 import AmenityIcon from "@/components/klusta/AmenityIcon";
 import PropertyDetailsStickyBar from "@/components/klusta/PropertyDetailsStickyBar";
+import { PropertyDetailSkeleton } from "@/components/ui/skeleton";
 
 function StarRating({ rating }: { rating: number }) {
   const full = Math.floor(rating);
@@ -45,14 +46,14 @@ export default function PropertyDetailContent({ id }: PropertyDetailContentProps
         (raw as { property?: Record<string, unknown> }).property &&
         typeof (raw as { property?: Record<string, unknown> }).property === "object"
         ? ({
-            ...(raw as { property: Record<string, unknown> }).property,
+            ...(raw as unknown as { property: Record<string, unknown> }).property,
             amenities: (raw as { amenities?: unknown }).amenities,
             images:
               (raw as { images?: unknown }).images ??
-              (raw as { property: Record<string, unknown> }).property.images,
+              (raw as unknown as { property: Record<string, unknown> }).property.images,
             category_name: Array.isArray((raw as { categories?: unknown[] }).categories)
               ? String((raw as { categories?: unknown[] }).categories?.[0] ?? "")
-              : (raw as { property: Record<string, unknown> }).property.category_name,
+              : (raw as unknown as { property: Record<string, unknown> }).property.category_name,
           } as Parameters<typeof mapApiPropertyToDisplay>[0])
         : ("id" in raw ? (raw as Parameters<typeof mapApiPropertyToDisplay>[0]) : null)
       : null;
@@ -79,7 +80,7 @@ export default function PropertyDetailContent({ id }: PropertyDetailContentProps
     return (
       <div className="min-h-screen bg-white pb-24 dark:bg-gray-900">
         <div className="mx-auto max-w-(--breakpoint-2xl) px-4 py-12 md:px-6">
-          <p className="text-theme-sm text-gray-500 dark:text-gray-400">Loading property…</p>
+          <PropertyDetailSkeleton />
         </div>
       </div>
     );

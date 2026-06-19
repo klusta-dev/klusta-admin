@@ -5,6 +5,7 @@ import { usePropertyList } from "@/lib/api/hooks";
 import { mapApiPropertyToDisplay } from "@/lib/api/types";
 import PropertiesTable from "@/components/klusta/PropertiesTable";
 import type { PropertyDisplay } from "@/lib/api/types";
+import { PropertyGridSkeleton } from "@/components/ui/skeleton";
 
 const MOCK_PENDING_PROPERTIES: PropertyDisplay[] = [
   {
@@ -36,20 +37,14 @@ const MOCK_PENDING_PROPERTIES: PropertyDisplay[] = [
 ];
 
 export default function PendingPropertiesList() {
-  const { data, isLoading, isError } = usePropertyList({ page_size: 100 });
-  const raw = data?.data as { properties?: unknown[] } | unknown[] | undefined;
-  const list = Array.isArray(raw) ? raw : raw?.properties ?? [];
+  const { data, isLoading, isError } = usePropertyList({ page: 1, limit: 100 });
+  const raw = data?.data as { properties?: unknown[]; data?: unknown[] } | unknown[] | undefined;
+  const list = Array.isArray(raw) ? raw : (raw?.properties ?? raw?.data ?? []);
   const pending = list
     .map((p) => mapApiPropertyToDisplay(p as Parameters<typeof mapApiPropertyToDisplay>[0]))
     .filter((p) => p.status === "pending");
 
-  if (isLoading) {
-    return (
-      <div className="rounded-2xl border border-gray-200 bg-white p-6 text-theme-sm text-gray-500 dark:border-gray-800 dark:bg-white/3 dark:text-gray-400">
-        Loading pending properties...
-      </div>
-    );
-  }
+  if (isLoading) return <PropertyGridSkeleton count={4} />;
 
   if (isError) {
     return <PropertiesTable properties={MOCK_PENDING_PROPERTIES} />;

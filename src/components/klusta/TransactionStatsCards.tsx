@@ -4,27 +4,36 @@ import React from "react";
 import Link from "next/link";
 import { DollarLineIcon, BoxCubeIcon, CheckCircleIcon } from "@/icons";
 import { useAdminStats } from "@/lib/api/hooks";
+import { TransactionStatsSkeleton } from "@/components/ui/skeleton";
 
-const cards = [
+type EarningsKey = "total_earnings" | "in_escrow" | "platform_revenue";
+
+const cards: {
+  key: string;
+  label: string;
+  valueKey: EarningsKey;
+  href: string;
+  icon: React.ReactNode;
+}[] = [
   {
-    key: "bookings",
-    label: "Total Transactions",
-    valueKey: "bookings" as const,
-    href: "/transactions",
-    icon: <BoxCubeIcon className="size-6" />,
-  },
-  {
-    key: "earnings",
+    key: "total_earnings",
     label: "Total Earnings",
-    valueKey: "earnings" as const,
+    valueKey: "total_earnings",
     href: "/transactions",
     icon: <DollarLineIcon className="size-6" />,
   },
   {
-    key: "withdrawals",
-    label: "Total Withdrawals",
-    valueKey: "withdrawals" as const,
+    key: "in_escrow",
+    label: "In Escrow",
+    valueKey: "in_escrow",
     href: "/transactions",
+    icon: <BoxCubeIcon className="size-6" />,
+  },
+  {
+    key: "platform_revenue",
+    label: "Platform Revenue",
+    valueKey: "platform_revenue",
+    href: "/withdrawals",
     icon: <CheckCircleIcon className="size-6" />,
   },
 ];
@@ -33,16 +42,13 @@ export default function TransactionStatsCards() {
   const { data: apiData, isLoading, isSuccess } = useAdminStats();
   const stats = apiData?.data as Record<string, number> | undefined;
 
-  const getValue = (valueKey: (typeof cards)[number]["valueKey"]) => {
+  if (isLoading) return <TransactionStatsSkeleton />;
+
+  const getValue = (valueKey: EarningsKey) => {
     if (isSuccess && stats && typeof stats[valueKey] === "number") {
-      const value = stats[valueKey];
-      if (valueKey === "earnings" || valueKey === "withdrawals") {
-        return `₦${value.toLocaleString()}`;
-      }
-      return value.toLocaleString();
+      return `₦${stats[valueKey].toLocaleString()}`;
     }
-    if (isLoading) return "…";
-    return valueKey === "earnings" || valueKey === "withdrawals" ? "₦0" : "0";
+    return "₦0";
   };
 
   return (

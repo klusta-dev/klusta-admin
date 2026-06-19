@@ -1,7 +1,5 @@
 import { Metadata } from "next";
-import { notFound } from "next/navigation";
 import React from "react";
-import { HOME_OWNERS } from "@/lib/mock/home-owners";
 import HomeOwnerDetailsContent from "@/components/klusta/HomeOwnerDetailsContent";
 
 interface PageProps {
@@ -10,17 +8,12 @@ interface PageProps {
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { id } = await params;
-  const owner = HOME_OWNERS.find((item) => item.id === id);
   return {
-    title: owner ? `${owner.name} | Home Owner` : "Home Owner Details",
+    title: `Home Owner ${id.slice(0, 8)} | Klusta Admin`,
   };
 }
 
 export default async function HomeOwnerDetailsPage({ params }: PageProps) {
   const { id } = await params;
-  const owner = HOME_OWNERS.find((item) => item.id === id);
-
-  if (!owner) notFound();
-
-  return <HomeOwnerDetailsContent owner={owner} />;
+  return <HomeOwnerDetailsContent userId={id} />;
 }

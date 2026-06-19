@@ -33,13 +33,148 @@ export interface RefreshTokenRequest {
 
 export interface AdminStats {
   total_users?: number;
-  active_users?: number;
   total_properties?: number;
-  total_amenities?: number;
-  total_categories?: number;
-  withdrawals?: number;
-  earnings?: number;
-  bookings?: number;
+  total_bookings?: number;
+  total_earnings?: number;
+  in_escrow?: number;
+  total_released?: number;
+  platform_revenue?: number;
+  pending_withdrawal_count?: number;
+  pending_withdrawal_amount?: number;
+}
+
+// ── Bookings ──────────────────────────────────────────────────────────────────
+
+export interface BookingListParams {
+  page: number;
+  limit: number;
+  booking_status?: "upcoming" | "ongoing" | "closed" | "cancelled";
+  payment_status?: "pending" | "confirmed" | "failed";
+  escrow_status?: "held" | "released" | "none";
+}
+
+export interface BookingListItem {
+  id: string;
+  property_id: string;
+  property_name: string;
+  guest_id: string;
+  guest_name: string;
+  guest_email: string;
+  total_amount: number;
+  host_earnings: number;
+  tax_amount: number;
+  platform_commission: number;
+  booking_status: string;
+  payment_status: string;
+  escrow_status: string;
+  payment_ref?: string;
+  payment_expires_at?: string | null;
+  check_in: number;
+  check_out: number;
+  booked_at: string;
+  created_at: string;
+}
+
+export interface BookingsListData {
+  total: number;
+  page: number;
+  limit: number;
+  bookings: BookingListItem[];
+}
+
+// ── Withdrawals ───────────────────────────────────────────────────────────────
+
+export interface WithdrawalListParams {
+  page: number;
+  limit: number;
+  status?: "pending" | "approved" | "rejected" | "completed";
+}
+
+export interface WithdrawalListItem {
+  id: string;
+  amount: number;
+  status: string;
+  user_id: string;
+  user_name: string;
+  user_email: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface WithdrawalsListData {
+  total: number;
+  page: number;
+  limit: number;
+  withdrawals: WithdrawalListItem[];
+}
+
+export interface UpdateWithdrawalStatusReq {
+  status: "approved" | "rejected" | "completed";
+}
+
+// ── Platform Settings ─────────────────────────────────────────────────────────
+
+export interface PlatformSettings {
+  platform_commission_percentage: number;
+  automatic_payment: boolean;
+  transaction_wait_time_minutes: number;
+}
+
+export interface UpdatePlatformSettingsReq {
+  platform_commission_percentage?: number;
+  automatic_payment?: boolean;
+  transaction_wait_time_minutes?: number;
+}
+
+export interface DisburseResult {
+  released: number;
+  message: string;
+}
+
+// ── Merchant Fund Locks ───────────────────────────────────────────────────────
+
+export interface FundLockReq {
+  reason: string;
+}
+
+export interface FundLockResult {
+  lock_id: string;
+  merchant_id: string;
+  reason?: string;
+  release_reason?: string;
+  locked_at?: string;
+  released_at?: string;
+  status: string;
+}
+
+// ── Push Notifications ────────────────────────────────────────────────────────
+
+export interface PushNotificationReq {
+  target_user_id: string;
+  category: string;
+  event_type: string;
+  title: string;
+  body: string;
+  entity_id?: string;
+  screen?: string;
+}
+
+export interface BroadcastPushReq {
+  category: string;
+  event_type: string;
+  title: string;
+  body: string;
+  entity_id?: string | null;
+  screen?: string;
+}
+
+export interface PushResult {
+  dispatched: boolean;
+  onesignal_id?: string;
+  skip_reason?: string;
+  provider_detail?: unknown;
+  user_count?: number;
+  token_count?: number;
 }
 
 export interface AdminUsersParams {
@@ -62,6 +197,9 @@ export interface AdminUserListItem {
   profile_image?: string;
   is_active?: boolean;
   account_type?: string;
+  accountType?: string;
+  emailVerifiedAt?: string | null;
+  email_verified_at?: string | null;
   created_at?: string;
   [key: string]: unknown;
 }
@@ -87,14 +225,16 @@ export interface UserDisplay {
 
 export function mapApiUserToDisplay(u: AdminUserListItem | AdminUserDetail): UserDisplay {
   const name = [u.first_name, u.last_name].filter(Boolean).join(" ") || u.email?.split("@")[0] || "—";
+  const verifiedAt = u.emailVerifiedAt ?? u.email_verified_at;
+  const status: UserDisplay["status"] = verifiedAt ? "active" : "inactive";
   return {
     id: u.id,
     name,
     email: u.email ?? "",
     phone: u.phone_number,
     avatar: u.profile_image,
-    role: u.account_type ?? "user",
-    // status: u.is_active === true ? "active" : u.is_active === false ? "inactive" : "pending",
+    role: (u.account_type ?? (u.accountType as string | undefined) ?? "user"),
+    status,
     joinedAt: u.created_at ?? "",
   };
 }
@@ -184,13 +324,13 @@ export function mapApiCategoryToDisplay(c: CategoryListItem): CategoryDisplay {
 }
 
 export interface PropertyListParams {
-  page_size: number;
-  page_id?: number;
-  search?: string;
-  min_price?: number;
-  max_price?: number;
-  category?: string;
-  amenity?: string;
+  page: number;
+  limit: number;
+  q?: string;
+  category_id?: string;
+  amenity_ids?: string;
+  city?: string;
+  country?: string;
 }
 
 export interface PropertyOwnerListParams {

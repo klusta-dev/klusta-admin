@@ -6,6 +6,7 @@ import { notFound } from "next/navigation";
 import UserDetailsCard from "@/components/klusta/UserDetailsCard";
 import { useAdminUser } from "@/lib/api/hooks";
 import { mapApiUserToDisplay } from "@/lib/api/types";
+import { UserDetailSkeleton } from "@/components/ui/skeleton";
 
 export default function UserDetailsPage() {
   const params = useParams();
@@ -13,13 +14,7 @@ export default function UserDetailsPage() {
   const { data, isLoading, isError, error } = useAdminUser(id);
 
   if (!id) notFound();
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center py-16 text-theme-sm text-gray-500 dark:text-gray-400">
-        Loading user…
-      </div>
-    );
-  }
+  if (isLoading) return <UserDetailSkeleton />;
   if (isError || !data?.data) {
     if (isError && error && (error as { response?: { status?: number } })?.response?.status === 404) notFound();
     return (

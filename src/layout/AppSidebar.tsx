@@ -6,18 +6,15 @@ import { useSidebar } from "../context/SidebarContext";
 import {
   AlertIcon,
   BoxCubeIcon,
-  CalenderIcon,
   ChatIcon,
   ChevronDownIcon,
   FolderIcon,
   GridIcon,
   HorizontaLDots,
   ListIcon,
-  PageIcon,
-  PieChartIcon,
-  PlugInIcon,
-  TableIcon,
   UserCircleIcon,
+  DollarLineIcon,
+  PlugInIcon,
 } from "../icons/index";
 
 type NavItem = {
@@ -60,8 +57,13 @@ const navItems: NavItem[] = [
   },
   {
     icon: <BoxCubeIcon />,
-    name: "Transactions",
+    name: "Bookings",
     path: "/transactions",
+  },
+  {
+    icon: <DollarLineIcon />,
+    name: "Withdrawals",
+    path: "/withdrawals",
   },
   {
     icon: <BoxCubeIcon />,
@@ -74,6 +76,11 @@ const navItems: NavItem[] = [
     path: "/categories",
   },
   {
+    icon: <PlugInIcon />,
+    name: "Notifications",
+    path: "/notifications",
+  },
+  {
     icon: <AlertIcon />,
     name: "Reports",
     path: "/reports",
@@ -82,6 +89,11 @@ const navItems: NavItem[] = [
     icon: <ChatIcon />,
     name: "Customer support",
     path: "/customer-support",
+  },
+  {
+    icon: <ListIcon />,
+    name: "Settings",
+    path: "/settings",
   },
 ];
 

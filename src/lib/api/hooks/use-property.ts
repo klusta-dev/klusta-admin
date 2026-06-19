@@ -4,7 +4,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import * as propertyApi from "../endpoints/property";
 import { propertyKeys } from "../query-keys";
 
-export function usePropertyList(params: { page_size: number; page_id?: number; search?: string; category?: string; amenity?: string; min_price?: number; max_price?: number }) {
+export function usePropertyList(params: { page: number; limit: number; q?: string; category_id?: string; amenity_ids?: string; city?: string; country?: string }) {
   return useQuery({
     queryKey: propertyKeys.list(params),
     queryFn: () => propertyApi.getPropertyList(params),

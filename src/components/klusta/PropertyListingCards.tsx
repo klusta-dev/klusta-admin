@@ -8,6 +8,7 @@ import { ListIcon, TableIcon } from "@/icons";
 import PropertiesTable from "@/components/klusta/PropertiesTable";
 import { usePropertyList } from "@/lib/api/hooks";
 import { mapApiPropertyToDisplay, type PropertyDisplay } from "@/lib/api/types";
+import { PropertyGridSkeleton } from "@/components/ui/skeleton";
 
 const statusColor: Record<string, "success" | "warning" | "error"> = {
   listed: "success",
@@ -51,20 +52,20 @@ const FILTER_CHIPS = [
 ] as const;
 
 export default function PropertyListingCards() {
-  const { data, isLoading, isError, error } = usePropertyList({ page_size: 50, page_id: 1 });
   const [viewMode, setViewMode] = useState<"listings" | "table">("listings");
   const [search, setSearch] = useState("");
   const [location, setLocation] = useState("All locations");
   const [filter, setFilter] = useState<"all" | "listed" | "pending" | "unlisted">("all");
 
-  // const { data, isLoading, isError, error } = usePropertyList({
-  //   page_size: 10,
-  //   page_id: 1,
-  //   search: search.trim() || undefined,
-  // });
+  const { data, isLoading, isError, error } = usePropertyList({
+    page: 1,
+    limit: 50,
+    q: search.trim() || undefined,
+    city: location !== "All locations" ? location : undefined,
+  });
 
-  const raw = data?.data as { properties?: unknown[] } | unknown[] | undefined;
-  const list = Array.isArray(raw) ? raw : raw?.properties ?? [];
+  const raw = data?.data as { properties?: unknown[]; data?: unknown[] } | unknown[] | undefined;
+  const list = Array.isArray(raw) ? raw : (raw?.properties ?? raw?.data ?? []);
   const allItems: PropertyDisplay[] = list.map((p) =>
     mapApiPropertyToDisplay(p as Parameters<typeof mapApiPropertyToDisplay>[0])
   );
@@ -83,9 +84,7 @@ export default function PropertyListingCards() {
           <h1 className="text-2xl font-bold text-typography dark:text-white/90 md:text-3xl">Welcome to Klusta</h1>
           <p className="mt-1 text-theme-sm text-gray-500 dark:text-gray-400">Book your accommodations and sail smoothly.</p>
         </div>
-        <div className="flex items-center justify-center py-16 text-theme-sm text-gray-500 dark:text-gray-400">
-          Loading properties…
-        </div>
+        <PropertyGridSkeleton count={6} />
       </div>
     );
   }
@@ -189,7 +188,7 @@ export default function PropertyListingCards() {
               Loading properties...
             </p>
           )}
-          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:gap-6 lg:grid-cols-3 2xl:grid-cols-4">
             {filtered.map((property) => (
               <PropertyLargeCard key={property.id} property={property} />
             ))}
@@ -210,11 +209,11 @@ function PropertyLargeCard({ property }: { property: PropertyDisplay }) {
   return (
     <Link
       href={`/properties/${property.id}`}
-      className="flex min-w-[280px] max-w-[340px] shrink-0 flex-col overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-theme-sm transition-shadow hover:shadow-theme-md dark:border-gray-800 dark:bg-white/3"
+      className="flex w-full flex-col overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-theme-sm transition-shadow hover:shadow-theme-md dark:border-gray-800 dark:bg-white/3"
     >
       <div className="relative aspect-[4/3] bg-gray-200 dark:bg-gray-700">
         {imgSrc ? (
-          <Image src={imgSrc} alt={property.title} fill className="object-cover" sizes="340px" />
+          <Image src={imgSrc} alt={property.title} fill className="object-cover" sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw" />
         ) : (
           <div className="flex h-full w-full items-center justify-center text-4xl text-gray-400">—</div>
         )}

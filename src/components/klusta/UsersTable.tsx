@@ -14,29 +14,34 @@ import {
 import { EyeIcon } from "@/icons";
 import { useAdminUsers } from "@/lib/api/hooks";
 import { mapApiUserToDisplay } from "@/lib/api/types";
+import { UsersTableSkeleton } from "@/components/ui/skeleton";
+
+function formatAccountType(raw: string | undefined | null): string {
+  const t = (raw ?? "").toUpperCase();
+  if (t === "ADMIN") return "Admin";
+  if (t === "CLIENT") return "Client";
+  if (t === "MERCHANT" || t === "HOST") return "Merchant";
+  return raw ?? "—";
+}
 
 const PAGE_SIZE = 10;
 export default function UsersTable() {
   const [page, setPage] = useState(1);
-  const offset = page * PAGE_SIZE;
+  const offset = (page - 1) * PAGE_SIZE;
   const { data, isLoading, isError, error } = useAdminUsers({ limit: PAGE_SIZE, offset });
   const adminUsersResponse = data?.data;
-  const users = adminUsersResponse || [];
+  const allUsers = adminUsersResponse?.users ?? [];
   const total = adminUsersResponse?.total ?? 0;
+  const users = allUsers.filter((u: any) => {
+    const type = (u.account_type ?? u.accountType ?? "").toUpperCase();
+    return type === "CLIENT" || type === "";
+  });
   const displayUsers = users.map((user: any) => mapApiUserToDisplay(user));
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
-  const hasNext = page < totalPages - 1;
-  const hasPrev = page > 0;
+  const hasNext = page < totalPages;
+  const hasPrev = page > 1;
 
-  if (isLoading) {
-    return (
-      <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-white/3">
-        <div className="flex items-center justify-center py-16 text-theme-sm text-gray-500 dark:text-gray-400">
-          Loading users…
-        </div>
-      </div>
-    );
-  }
+  if (isLoading) return <UsersTableSkeleton rows={PAGE_SIZE} />;
 
   if (isError) {
     return (
@@ -51,7 +56,7 @@ export default function UsersTable() {
   return (
     <div className="space-y-4">
       <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-white/3">
-        <div className="max-w-full overflow-x-auto">
+        <div className="max-w-full overflow-x-auto no-scrollbar">
           <Table>
             <TableHeader className="border-b border-gray-100 dark:border-white/5">
               <TableRow>
@@ -66,6 +71,12 @@ export default function UsersTable() {
                   className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400"
                 >
                   Email
+                </TableCell>
+                <TableCell
+                  isHeader
+                  className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400"
+                >
+                  Account Type
                 </TableCell>
                 <TableCell
                   isHeader
@@ -99,6 +110,7 @@ export default function UsersTable() {
                   <TableCell className="px-5 py-12 text-center text-theme-sm text-gray-500 dark:text-gray-400">
                     No users found.
                   </TableCell>
+                  <TableCell className="px-5 py-12">{null}</TableCell>
                   <TableCell className="px-5 py-12">{null}</TableCell>
                   <TableCell className="px-5 py-12">{null}</TableCell>
                   <TableCell className="px-5 py-12">{null}</TableCell>
@@ -149,6 +161,9 @@ export default function UsersTable() {
                       {user.email}
                     </TableCell>
                     <TableCell className="px-5 py-4 text-gray-600 text-theme-sm dark:text-gray-400">
+                      {formatAccountType((users[index] as any)?.account_type ?? (users[index] as any)?.accountType)}
+                    </TableCell>
+                    <TableCell className="px-5 py-4 text-gray-600 text-theme-sm dark:text-gray-400">
                       {activeBookings}
                     </TableCell>
                     <TableCell className="px-5 py-4">
@@ -186,7 +201,7 @@ export default function UsersTable() {
           <div className="flex gap-2">
             <button
               type="button"
-              onClick={() => setPage((p) => Math.max(0, p - 1))}
+              onClick={() => setPage((p) => Math.max(1, p - 1))}
               disabled={!hasPrev}
               className="rounded-lg border border-gray-200 px-3 py-2 text-theme-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800"
             >
@@ -194,7 +209,7 @@ export default function UsersTable() {
             </button>
             <button
               type="button"
-              onClick={() => setPage((p) => Math.min(totalPages - 1, p + 1))}
+              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
               disabled={!hasNext}
               className="rounded-lg border border-gray-200 px-3 py-2 text-theme-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800"
             >

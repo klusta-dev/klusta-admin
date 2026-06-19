@@ -1,13 +1,24 @@
-/**
- * Centralized query keys for cache invalidation / propagation.
- */
-
 export const adminKeys = {
   all: ["admin"] as const,
   stats: () => [...adminKeys.all, "stats"] as const,
   users: (params?: { limit?: number; offset?: number }) =>
     [...adminKeys.all, "users", params] as const,
   user: (id: string) => [...adminKeys.all, "users", id] as const,
+};
+
+export const bookingKeys = {
+  all: ["bookings"] as const,
+  list: (params?: Record<string, unknown>) => [...bookingKeys.all, "list", params] as const,
+};
+
+export const withdrawalKeys = {
+  all: ["withdrawals"] as const,
+  list: (params?: Record<string, unknown>) => [...withdrawalKeys.all, "list", params] as const,
+};
+
+export const settingsKeys = {
+  all: ["settings"] as const,
+  detail: () => [...settingsKeys.all, "detail"] as const,
 };
 
 export const amenitiesKeys = {

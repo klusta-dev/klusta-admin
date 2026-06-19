@@ -3,8 +3,8 @@ import type { SuccessResponse } from "../types";
 import type { PropertyListItem, PropertyListParams, PropertyOwnerListParams } from "../types";
 
 export async function getPropertyList(params: PropertyListParams) {
-  const { data } = await api.get<SuccessResponse<{ properties?: PropertyListItem[]; total?: number }>>(
-    "/property/property-list",
+  const { data } = await api.get<SuccessResponse<{ properties?: PropertyListItem[]; data?: PropertyListItem[]; total?: number }>>(
+    "/property/client-catalog",
     { params }
   );
   return data;
@@ -17,16 +17,8 @@ export async function getPropertyOwnerList(params: PropertyOwnerListParams) {
 
 export async function getProperty(id: string) {
   const safeId = encodeURIComponent(String(id).trim());
-  try {
-    const { data } = await api.get<SuccessResponse<PropertyListItem>>(`/property/get-property/${safeId}`);
-    return data;
-  } catch (error) {
-    // Some environments expose get-property as query based instead of path based.
-    const { data } = await api.get<SuccessResponse<PropertyListItem>>("/property/get-property", {
-      params: { id: String(id).trim() },
-    });
-    return data;
-  }
+  const { data } = await api.get<SuccessResponse<PropertyListItem>>(`/property/client-detail/${safeId}`);
+  return data;
 }
 
 export async function updateProperty(id: string, body: Record<string, unknown>) {

@@ -58,7 +58,7 @@ const statusColor: Record<TransactionStatus, "success" | "warning" | "error"> = 
 export default function TransactionsList() {
   return (
     <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-white/3">
-      <div className="overflow-x-auto">
+      <div className="overflow-x-auto no-scrollbar">
         <table className="min-w-full">
           <thead className="border-b border-gray-100 dark:border-white/5">
             <tr>
